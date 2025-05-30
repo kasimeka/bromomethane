@@ -1,6 +1,6 @@
 {
 	"name": "balatro-mod-manager",
-	"version": "0.2.6",
+	"version": "0.2.7",
 	"description": "A mod manager for Balatro - easily install and manage mods for the popular roguelike deckbuilding game",
 	"type": "module",
 	"scripts": {
