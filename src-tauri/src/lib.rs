@@ -774,6 +774,9 @@ fn extract_zip(path: &str, target_dir: &PathBuf) -> Result<(), String> {
             .by_index(i)
             .map_err(|e| format!("Failed to access file in archive: {}", e))?;
 
+        if file.name().starts_with("__MACOSX/") {
+            continue;
+        }
         let file_path = match file.enclosed_name() {
             Some(path) => path.to_owned(),
             None => continue,
@@ -817,6 +820,10 @@ fn extract_zip_from_memory(cursor: Cursor<Vec<u8>>, target_dir: &PathBuf) -> Res
         let mut file = archive
             .by_index(i)
             .map_err(|e| format!("Failed to access file in archive: {}", e))?;
+
+        if file.name().starts_with("__MACOSX/") {
+            continue;
+        }
 
         let file_path = match file.enclosed_name() {
             Some(path) => path.to_owned(),

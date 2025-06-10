@@ -178,6 +178,10 @@ fn extract_zip_root(
             source: format!("Zip entry error: {}", e),
         })?;
 
+        if file.name().starts_with("__MACOSX/") {
+            continue;
+        }
+
         let entry_path = path.join(file.name());
         ensure_safe_path(path, &entry_path)?;
 
@@ -216,6 +220,10 @@ fn extract_zip(zip: &mut ZipArchive<Cursor<bytes::Bytes>>, mod_dir: &Path) -> Re
             path: mod_dir.to_path_buf(),
             source: format!("Zip entry error: {}", e),
         })?;
+
+        if file.name().starts_with("__MACOSX/") {
+            continue;
+        }
 
         let entry_path = mod_dir.join(file.mangled_name());
         ensure_safe_path(mod_dir, &entry_path)?;
