@@ -1,84 +1,87 @@
 {
-	"$schema": "https://schema.tauri.app/config/2",
-	"productName": "Balatro Mod Manager",
-	"version": "0.2.7",
-	"identifier": "com.balatro-mod-manager.app",
-	"build": {
-		"beforeDevCommand": "bun run dev",
-		"devUrl": "http://localhost:1420",
-		"beforeBuildCommand": "bun run build",
-		"frontendDist": "../build"
-	},
-	"app": {
-		"windows": [
-			{
-				"title": "Balatro Mod Manager",
-				"width": 1035,
-				"height": 750,
-				"minWidth": 1035,
-				"minHeight": 750,
-				"resizable": true,
-				"visible": false
-			}
-		],
-		"security": {
-			"csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost data: https:; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' ipc: http://ipc.localhost https:"
-		}
-	},
-	"bundle": {
-		"active": true,
-		"targets": "all",
-		"icon": [
-			"icons/32x32.png",
-			"icons/128x128.png",
-			"icons/128x128@2x.png",
-			"icons/icon.icns",
-			"icons/icon.ico"
-		],
-		"resources": ["../static/fonts", "../static/images"],
-		"macOS": {
-			"entitlements": "Entitlements.plist",
-			"minimumSystemVersion": "11.0",
-			"signingIdentity": null,
-			"providerShortName": null,
-			"frameworks": []
-		},
-		"windows": {
-			"webviewInstallMode": {
-				"type": "embedBootstrapper"
-			}
-		}
-	},
-	"plugins": {
-		"shell": {
-			"open": true
-		},
-		"window": {
-			"create": true,
-			"close": true,
-			"maximize": true,
-			"minimize": true,
-			"unmaximize": true,
-			"unminimize": true,
-			"startDragging": true
-		},
-		"allowlist": {
-			"menu": {
-				"all": true
-			},
-			"path": {
-				"all": true
-			},
-			"fs": {
-				"scope": [
-					"$RESOURCE/**",
-					"$CONFIG/Balatro/mod_index/**",
-					"$ASSET/**"
-				]
-			},
-			"window": {
-				"show": true
-			}
-		}
-	}
+    "$schema": "https://schema.tauri.app/config/2",
+    "productName": "Balatro Mod Manager",
+    "version": "0.2.7",
+    "identifier": "com.balatro-mod-manager.app",
+    "build": {
+        "beforeDevCommand": "pnpm dev",
+        "devUrl": "http://localhost:1420",
+        "beforeBuildCommand": "pnpm build",
+        "frontendDist": "../build"
+    },
+    "app": {
+        "windows": [
+            {
+                "title": "Balatro Mod Manager",
+                "width": 1035,
+                "height": 750,
+                "minWidth": 1035,
+                "minHeight": 750,
+                "resizable": true,
+                "visible": false
+            }
+        ],
+        "security": {
+            "csp": "default-src 'self'; img-src 'self' asset: https://asset.localhost data: https:; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' ipc: http://ipc.localhost https:"
+        }
+    },
+    "bundle": {
+        "active": true,
+        "targets": "all",
+        "icon": [
+            "icons/32x32.png",
+            "icons/128x128.png",
+            "icons/128x128@2x.png",
+            "icons/icon.icns",
+            "icons/icon.ico"
+        ],
+        "resources": [
+            "../static/fonts",
+            "../static/images"
+        ],
+        "macOS": {
+            "entitlements": "Entitlements.plist",
+            "minimumSystemVersion": "11.0",
+            "signingIdentity": null,
+            "providerShortName": null,
+            "frameworks": []
+        },
+        "windows": {
+            "webviewInstallMode": {
+                "type": "embedBootstrapper"
+            }
+        }
+    },
+    "plugins": {
+        "shell": {
+            "open": true
+        },
+        "window": {
+            "create": true,
+            "close": true,
+            "maximize": true,
+            "minimize": true,
+            "unmaximize": true,
+            "unminimize": true,
+            "startDragging": true
+        },
+        "allowlist": {
+            "menu": {
+                "all": true
+            },
+            "path": {
+                "all": true
+            },
+            "fs": {
+                "scope": [
+                    "$RESOURCE/**",
+                    "$CONFIG/Balatro/mod_index/**",
+                    "$ASSET/**"
+                ]
+            },
+            "window": {
+                "show": true
+            }
+        }
+    }
 }
