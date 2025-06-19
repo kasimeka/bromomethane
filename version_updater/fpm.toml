@@ -1,0 +1,30 @@
+name = "version_updater"
+version = "0.1.0"
+license = "license"
+author = "Ö. Efe D."
+maintainer = "67526259+skyline69@users.noreply.github.com"
+copyright = "Copyright 2025, Ö. Efe D."
+
+[build]
+auto-executables = true
+auto-tests = false
+auto-examples = true
+module-naming = false
+
+[install]
+library = false
+test = false
+
+[fortran]
+implicit-typing = false
+implicit-external = false
+source-form = "free"
+
+[dependencies]
+openmp = "*"
+
+[[executable]]
+name = "version_updater"
+source-dir = "app"
+main = "main.f90"
+

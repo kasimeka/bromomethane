@@ -1,0 +1,49 @@
+[package]
+name = "bmm-lib"
+version = "0.2.6"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.98"
+bincode = { version = "2.0.1", features = ["serde"] }
+bytes = "1.10.1"
+chrono = "0.4.41"
+dirs = "6.0.0"
+discord-rich-presence = "0.2.5"
+env_logger = "0.11.8"
+flate2 = { version = "1.1.1", features = ["zlib"] }
+infer = "0.19.0"
+lazy_static = "1.5.0"
+libc = "0.2.172"
+libflate = "2.1.0"
+log = "0.4.27"
+regex = "1.11.1"
+reqwest = { version = "0.12.18", features = ["json"] }
+rusqlite = { version = "0.36.0", features = ["bundled"] }
+serde = { version = "1.0.219", features = ["serde_derive"] }
+serde_json = "1.0.140"
+serde_repr = "0.1.20"
+tar = "0.4.44"
+tauri = "2.5.1"
+tempfile = "3.20.0"
+tokio = { version = "1.45.1", features = ["full"] }
+zip = "4.0.0"
+
+[dev-dependencies]
+tempfile = "3.20.0"
+scopeguard = "1.2.0"
+mockito = "1.7.0"
+tokio = { version = "1.45.1", features = ["full", "test-util"] }
+rstest = "0.25.0"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.55.0"
+sysinfo = "0.35.1"
+
+[target.'cfg(unix)'.dependencies]
+libproc = "0.14.10"
+home = "0.5.11"
+# libloading = "0.8.6"
+
+[build-dependencies]
+dirs = "6.0.0"
