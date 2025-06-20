@@ -9,7 +9,6 @@
 pub mod balamod;
 pub mod cache;
 pub mod database;
-pub mod discord_rpc;
 pub mod errors;
 pub mod finder;
 pub mod installer;

@@ -9,12 +9,10 @@
 	let isReindexing = false;
 	let isClearingCache = false;
 	let isConsoleEnabled = false;
-	let isBackgroundAnimationEnabled = false;
 	let lastReindexStats = {
 		removedFiles: 0,
 		cleanedEntries: 0,
 	};
-	let isDiscordRpcEnabled = false;
 
 	export async function performReindexMods() {
 		isReindexing = true;
@@ -47,23 +45,6 @@
 		}
 	}
 
-	async function handleDiscordRpcChange() {
-		const newValue = !isDiscordRpcEnabled;
-		try {
-			await invoke("set_discord_rpc_status", { enabled: newValue });
-			isDiscordRpcEnabled = newValue;
-			addMessage(
-				`Discord Rich Presence ${newValue ? "enabled" : "disabled"}`,
-				"success",
-			);
-		} catch (error) {
-			console.error("Failed to set Discord RPC status:", error);
-			addMessage(
-				"Failed to update Discord Rich Presence status",
-				"error",
-			);
-		}
-	}
 
 	async function openModsFolder() {
 		try {
@@ -126,41 +107,12 @@
 		}
 	}
 
-	async function handleBackgroundAnimationChange() {
-		const newValue = !isBackgroundAnimationEnabled;
-
-		// Optimistic UI update
-		backgroundEnabled.set(newValue);
-
-		try {
-			await invoke("set_background_state", { enabled: newValue });
-			isBackgroundAnimationEnabled = newValue;
-		} catch (error) {
-			// Rollback on failure
-			backgroundEnabled.set(!newValue);
-			isBackgroundAnimationEnabled = !newValue;
-		}
-	}
-
 	onMount(async () => {
-		try {
-			isDiscordRpcEnabled = await invoke("get_discord_rpc_status");
-		} catch (error) {
-			console.error("Failed to get Discord RPC status:", error);
-			addMessage("Error fetching Discord Rich Presence status", "error");
-		}
 		try {
 			isConsoleEnabled = await invoke("get_lovely_console_status");
 		} catch (error) {
 			console.error("Failed to get console status:", error);
 			addMessage("Error fetching Lovely Console status", "error");
-		}
-		try {
-			isBackgroundAnimationEnabled = await invoke("get_background_state");
-			backgroundEnabled.set(isBackgroundAnimationEnabled);
-		} catch (error) {
-			console.error("Failed to get background status:", error);
-			addMessage("Error fetching background animation status", "error");
 		}
 	});
 </script>
@@ -238,40 +190,6 @@
 					<br />• Database entries for missing mod installations
 				</p>
 			</div>
-			<h3>Appearance</h3>
-			<div class="console-settings">
-				<span class="label-text">Enable Background Animation</span>
-				<div class="switch-container">
-					<label class="switch">
-						<input
-							type="checkbox"
-							checked={isBackgroundAnimationEnabled}
-							on:change={handleBackgroundAnimationChange}
-						/> <span class="slider"></span>
-					</label>
-				</div>
-			</div>
-			<p class="description-small">
-				Enable or disable the animated background. Disabling may improve
-				performance on low-end devices.
-			</p>
-
-			<div class="console-settings">
-				<span class="label-text">Enable Discord Rich Presence</span>
-				<div class="switch-container">
-					<label class="switch">
-						<input
-							type="checkbox"
-							checked={isDiscordRpcEnabled}
-							on:change={handleDiscordRpcChange}
-						/> <span class="slider"></span>
-					</label>
-				</div>
-			</div>
-			<p class="description-small">
-				Show your Balatro activity in Discord. Displays your current
-				status and mod manager usage.
-			</p>
 
 			<h3>Developer Options</h3>
 			<div class="console-settings">

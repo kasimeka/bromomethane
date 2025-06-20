@@ -1,5 +1,4 @@
 <script lang="ts">
-	import ShaderBackground from "../../components/ShaderBackground.svelte";
 	import About from "../../components/viewblock/About.svelte";
 	import LaunchButton from "../../components/LaunchButton.svelte";
 	import Mods from "../../components/viewblock/Mods.svelte";
@@ -192,10 +191,6 @@
 		}
 	});
 </script>
-
-{#if $backgroundEnabled}
-	<ShaderBackground />
-{/if}
 
 <div class="main-page">
 	<header>

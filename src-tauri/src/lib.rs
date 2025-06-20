@@ -32,7 +32,6 @@ use bmm_lib::cache;
 use bmm_lib::cache::Mod;
 use bmm_lib::database::Database;
 use bmm_lib::database::InstalledMod;
-use bmm_lib::discord_rpc::DiscordRpcManager;
 use bmm_lib::errors::AppError;
 use bmm_lib::finder::get_lovely_mods_dir;
 use bmm_lib::finder::is_balatro_running;
@@ -48,7 +47,6 @@ fn map_error<T>(result: Result<T, AppError>) -> Result<T, String> {
 // Create a state structure to hold the database
 struct AppState {
     db: Mutex<Database>,
-    discord_rpc: Mutex<DiscordRpcManager>,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -1098,39 +1096,6 @@ async fn refresh_mods_folder(state: tauri::State<'_, AppState>) -> Result<(), St
 }
 
 #[tauri::command]
-async fn get_discord_rpc_status(state: tauri::State<'_, AppState>) -> Result<bool, String> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
-    map_error(db.is_discord_rpc_enabled())
-}
-
-#[tauri::command]
-async fn set_discord_rpc_status(
-    state: tauri::State<'_, AppState>,
-    enabled: bool,
-) -> Result<(), String> {
-    // Step 1: Update database setting
-    let db = state
-        .db
-        .lock()
-        .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
-
-    map_error(db.set_discord_rpc_enabled(enabled))?;
-
-    // Step 2: Update Discord RPC manager
-    let discord_rpc = state
-        .discord_rpc
-        .lock()
-        .map_err(|_| AppError::LockPoisoned("Discord RPC lock poisoned".to_string()))?;
-
-    discord_rpc.set_enabled(enabled);
-
-    Ok(())
-}
-
-#[tauri::command]
 async fn launch_balatro(state: tauri::State<'_, AppState>) -> Result<(), String> {
     let (path_str, lovely_console_enabled) = {
         let db = state
@@ -2132,16 +2097,7 @@ pub fn run() {
             // Initialize database with error handling
             let db = map_error(Database::new())?;
 
-            let discord_rpc = DiscordRpcManager::new();
-
-            // Get initial Discord RPC setting from database
-            let discord_rpc_enabled = db.is_discord_rpc_enabled().unwrap_or(true);
-            discord_rpc.set_enabled(discord_rpc_enabled);
-
-            app.manage(AppState {
-                db: Mutex::new(db),
-                discord_rpc: Mutex::new(discord_rpc),
-            });
+            app.manage(AppState { db: Mutex::new(db) });
 
             let app_dir = app
                 .path()
@@ -2204,10 +2160,7 @@ pub fn run() {
             read_json_file,
             read_text_file,
             get_mod_thumbnail,
-            get_discord_rpc_status,
-            set_discord_rpc_status,
             get_latest_steamodded_release,
-            set_discord_rpc_status,
             mod_update_available,
             get_detected_local_mods,
             delete_manual_mod,
