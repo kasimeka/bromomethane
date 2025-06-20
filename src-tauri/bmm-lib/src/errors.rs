@@ -112,23 +112,23 @@ pub enum AppError {
 impl fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AppError::DatabaseInit(msg) => write!(f, "Database initialization failed: {}", msg),
-            AppError::DatabaseQuery(msg) => write!(f, "Database query error: {}", msg),
+            AppError::DatabaseInit(msg) => write!(f, "Database initialization failed: {msg}"),
+            AppError::DatabaseQuery(msg) => write!(f, "Database query error: {msg}"),
 
             AppError::FileRead { path, source } => {
                 write!(f, "Failed to read file '{}': {}", path.display(), source)
             }
 
             AppError::ModInstall { mod_name, source } => {
-                write!(f, "Failed to install mod '{}': {}", mod_name, source)
+                write!(f, "Failed to install mod '{mod_name}': {source}")
             }
 
             AppError::NetworkRequest { url, source } => {
-                write!(f, "Network request to '{}' failed: {}", url, source)
+                write!(f, "Network request to '{url}' failed: {source}")
             }
 
             AppError::MacOsLibrary { lib_name, source } => {
-                write!(f, "MacOS library '{}' error: {}", lib_name, source)
+                write!(f, "MacOS library '{lib_name}' error: {source}")
             }
 
             AppError::PathValidation { path, reason } => {
@@ -136,7 +136,7 @@ impl fmt::Display for AppError {
             }
 
             // Handle all variants similarly
-            _ => write!(f, "{:?}", self),
+            _ => write!(f, "{self:?}"),
         }
     }
 }
@@ -178,7 +178,7 @@ impl From<SystemTimeError> for AppError {
 impl From<reqwest::Error> for AppError {
     fn from(err: reqwest::Error) -> Self {
         AppError::NetworkRequest {
-            url: err.url().map(|u| u.to_string()).unwrap_or_default(),
+            url: err.url().map(std::string::ToString::to_string).unwrap_or_default(),
             source: err.to_string(),
         }
     }
@@ -207,14 +207,14 @@ impl From<serde_json::Error> for AppError {
 
 impl<T> From<std::sync::PoisonError<T>> for AppError {
     fn from(err: std::sync::PoisonError<T>) -> Self {
-        AppError::LockPoisoned(format!("Mutex poison error: {}", err))
+        AppError::LockPoisoned(format!("Mutex poison error: {err}"))
     }
 }
 
 // For Tauri command result compatibility
 impl From<AppError> for String {
     fn from(err: AppError) -> Self {
-        format!("{}", err)
+        format!("{err}")
     }
 }
 

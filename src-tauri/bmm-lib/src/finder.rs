@@ -25,10 +25,10 @@ fn read_path_from_registry() -> Result<String, std::io::Error> {
 fn remove_unexisting_paths(paths: &mut Vec<PathBuf>) {
     let mut i = 0;
     while i < paths.len() {
-        if !paths[i].exists() {
-            paths.remove(i);
-        } else {
+        if paths[i].exists() {
             i += 1;
+        } else {
+            paths.remove(i);
         }
     }
     info!("Found {} Balatro installations.", paths.len());
@@ -94,7 +94,7 @@ pub fn get_lovely_mods_dir(
         // probably ~/.steam/steam/steamapps/
         let prefix = {
             let installation_path = installation_path.map_or(PathBuf::new(), PathBuf::from);
-            log::debug!("installation_path: {:?}", installation_path);
+            log::debug!("installation_path: {installation_path:?}");
             if installation_path.ends_with("steamapps/common/Balatro/") {
                 installation_path
                     .parent()
@@ -120,7 +120,7 @@ pub fn get_lovely_mods_dir(
 }
 
 #[cfg(target_os = "linux")]
-pub fn get_balatro_paths() -> Vec<PathBuf> {
+#[must_use] pub fn get_balatro_paths() -> Vec<PathBuf> {
     let mut paths: Vec<PathBuf> = vec![];
     match home::home_dir() {
         Some(path) => {
@@ -134,7 +134,7 @@ pub fn get_balatro_paths() -> Vec<PathBuf> {
     paths
 }
 
-pub fn is_steam_running() -> bool {
+#[must_use] pub fn is_steam_running() -> bool {
     #[cfg(target_os = "windows")]
     {
         let system = System::new_all();
@@ -183,7 +183,7 @@ pub fn is_steam_running() -> bool {
     }
 }
 
-pub fn get_installed_mods(installation_path: Option<&String>) -> Vec<String> {
+#[must_use] pub fn get_installed_mods(installation_path: Option<&String>) -> Vec<String> {
     let mut installed_mods_paths: Vec<PathBuf> = vec![];
     // let game_path = get_balatro_paths();
     // let game_name: PathBuf = game_path
@@ -210,11 +210,11 @@ pub fn get_installed_mods(installation_path: Option<&String>) -> Vec<String> {
     // ignore .lovely and lovely directory
     res.iter()
         .filter(|p| !p.contains(".lovely") && !p.contains("lovely"))
-        .map(|p| p.to_string())
+        .map(std::string::ToString::to_string)
         .collect()
 }
 
-pub fn is_balatro_running() -> bool {
+#[must_use] pub fn is_balatro_running() -> bool {
     #[cfg(target_os = "windows")]
     {
         let system = System::new_all();

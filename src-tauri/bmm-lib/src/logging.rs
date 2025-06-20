@@ -26,7 +26,7 @@ pub fn init_logger() -> Result<(), AppError> {
 
     // Create a unique log file with timestamp
     let timestamp = Local::now().format("%Y-%m-%d_%H-%M-%S").to_string();
-    let log_file = log_dir.join(format!("bmm_{}.log", timestamp));
+    let log_file = log_dir.join(format!("bmm_{timestamp}.log"));
 
     // Clean up old log files
     cleanup_old_logs(&log_dir)?;
@@ -86,7 +86,7 @@ impl Write for CustomWriter {
                 Ok(bytes_written)
             }
             Err(e) => {
-                eprintln!("Failed to write to log file: {}", e);
+                eprintln!("Failed to write to log file: {e}");
                 stdout_result // Return stdout result if file write fails
             }
         }

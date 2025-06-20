@@ -47,7 +47,7 @@ pub async fn install_mod(
             // Extract from URL as fallback
             let url_name = url
                 .split('/')
-                .last()
+                .next_back()
                 .and_then(|s| s.split('.').next())
                 .unwrap_or("unknown_mod");
 
@@ -59,7 +59,7 @@ pub async fn install_mod(
                     .unwrap_or_default()
                     .as_secs();
 
-                format!("mod_{}", timestamp)
+                format!("mod_{timestamp}")
             } else {
                 url_name.to_string()
             }
@@ -69,11 +69,11 @@ pub async fn install_mod(
     // Uninstall old mod folder if it exists
     let target_dir = mod_dir.join(&mod_name);
     if target_dir.exists() {
-        log::info!("Uninstalling existing mod at: {:?}", target_dir);
+        log::info!("Uninstalling existing mod at: {target_dir:?}");
         uninstall_mod(installation_path, target_dir.clone())?;
     }
 
-    log::info!("Installing mod: {}", url);
+    log::info!("Installing mod: {url}");
 
     let installed_path = match file_type {
         "application/zip" => handle_zip(file, &mod_dir, &mod_name)?,
@@ -81,13 +81,12 @@ pub async fn install_mod(
         "application/gzip" => handle_tar_gz(file, &mod_dir, &mod_name)?, // Updated
         _ => {
             return Err(AppError::InvalidState(format!(
-                "Unsupported file type: {}",
-                file_type
+                "Unsupported file type: {file_type}"
             )))
         }
     };
 
-    log::info!("Mod installed successfully at: {:?}", installed_path);
+    log::info!("Mod installed successfully at: {installed_path:?}");
     Ok(installed_path)
 }
 
@@ -95,14 +94,14 @@ fn handle_zip(file: bytes::Bytes, mod_dir: &Path, mod_name: &str) -> Result<Path
     let cursor = Cursor::new(file);
     let mut zip = ZipArchive::new(cursor).map_err(|e| AppError::FileWrite {
         path: mod_dir.to_path_buf(),
-        source: format!("Invalid zip archive: {}", e),
+        source: format!("Invalid zip archive: {e}"),
     })?;
 
     // Determine if ZIP has root files
     let has_root_files = (0..zip.len()).try_fold(false, |acc, i| -> Result<bool, AppError> {
         let file = zip.by_index(i).map_err(|e| AppError::FileRead {
             path: mod_dir.to_path_buf(),
-            source: format!("Zip entry error: {}", e),
+            source: format!("Zip entry error: {e}"),
         })?;
         Ok(acc || !file.name().contains('/'))
     })?;
@@ -152,7 +151,7 @@ fn handle_zip(file: bytes::Bytes, mod_dir: &Path, mod_name: &str) -> Result<Path
         // Move to target directory
         fs::rename(&source_dir, &target_dir).map_err(|e| AppError::FileWrite {
             path: source_dir.clone(),
-            source: format!("Failed to rename directory: {}", e),
+            source: format!("Failed to rename directory: {e}"),
         })?;
 
         // Clean up
@@ -177,7 +176,7 @@ fn extract_zip_root(
     for i in 0..zip.len() {
         let mut file = zip.by_index(i).map_err(|e| AppError::FileRead {
             path: path.clone(),
-            source: format!("Zip entry error: {}", e),
+            source: format!("Zip entry error: {e}"),
         })?;
 
         if file.name().starts_with("__MACOSX/") {
@@ -206,13 +205,13 @@ fn get_zip_root_dir(
 ) -> Result<String, AppError> {
     let first_entry = zip.by_index(0).map_err(|e| AppError::FileRead {
         path: mod_dir.to_path_buf(),
-        source: format!("Zip entry error: {}", e),
+        source: format!("Zip entry error: {e}"),
     })?;
 
     let name_parts: Vec<&str> = first_entry.name().split('/').collect();
     name_parts
         .first()
-        .map(|s| s.to_string())
+        .map(|s| (*s).to_string())
         .ok_or_else(|| AppError::InvalidState("Empty zip archive".into()))
 }
 
@@ -220,7 +219,7 @@ fn extract_zip(zip: &mut ZipArchive<Cursor<bytes::Bytes>>, mod_dir: &Path) -> Re
     for i in 0..zip.len() {
         let mut file = zip.by_index(i).map_err(|e| AppError::FileRead {
             path: mod_dir.to_path_buf(),
-            source: format!("Zip entry error: {}", e),
+            source: format!("Zip entry error: {e}"),
         })?;
 
         if file.name().starts_with("__MACOSX/") {
@@ -269,18 +268,18 @@ fn extract_tar(
 
     let entries = tar.entries().map_err(|e| AppError::FileRead {
         path: mod_dir.to_path_buf(),
-        source: format!("Tar entry error: {}", e),
+        source: format!("Tar entry error: {e}"),
     })?;
 
     for entry in entries {
         let mut entry = entry.map_err(|e| AppError::FileRead {
             path: mod_dir.to_path_buf(),
-            source: format!("Tar entry error: {}", e),
+            source: format!("Tar entry error: {e}"),
         })?;
 
         let entry_path = entry.path().map_err(|e| AppError::FileRead {
             path: mod_dir.to_path_buf(),
-            source: format!("Invalid path in tar: {}", e),
+            source: format!("Invalid path in tar: {e}"),
         })?;
 
         // Extract to the target directory instead of mod_dir
@@ -327,27 +326,27 @@ fn copy_file_contents(reader: &mut impl io::Read, path: &PathBuf) -> Result<(), 
 }
 
 fn ensure_safe_path(base: &Path, path: &Path) -> Result<(), AppError> {
-    if !path.starts_with(base) {
+    if path.starts_with(base) {
+        Ok(())
+    } else {
         Err(AppError::PathValidation {
             path: path.to_path_buf(),
             reason: "Path traversal attempt detected".into(),
         })
-    } else {
-        Ok(())
     }
 }
 
 pub fn uninstall_mod(installation_path: Option<&String>, path: PathBuf) -> Result<(), AppError> {
-    log::info!("Uninstalling mod: {:?}", path);
+    log::info!("Uninstalling mod: {path:?}");
 
     let mods_dir = get_lovely_mods_dir(installation_path);
 
     validate_uninstall_path(&path, &mods_dir)
-        .inspect_err(|e| log::error!("Uninstall path validation error: {}", e.to_string()))?;
+        .inspect_err(|e| log::error!("Uninstall path validation error: {e}"))?;
 
     if let Some(dir_name) = path.file_name().and_then(|n| n.to_str()) {
         if dir_name.starts_with("Steamodded-smods-") {
-            log::info!("Uninstalling Steamodded variant: {}", dir_name);
+            log::info!("Uninstalling Steamodded variant: {dir_name}");
         }
     }
 

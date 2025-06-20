@@ -3,8 +3,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
-// Add Clone derive
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct DiscordRpcManager {
     enabled: Arc<Mutex<bool>>,
     client: Arc<Mutex<Option<DiscordIpcClient>>>,
@@ -17,7 +16,7 @@ impl Default for DiscordRpcManager {
 }
 
 impl DiscordRpcManager {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         log::info!("Initializing Discord RPC Manager");
         let manager = Self {
             enabled: Arc::new(Mutex::new(false)),
@@ -28,7 +27,7 @@ impl DiscordRpcManager {
 
         thread::spawn(move || {
             log::info!("Discord RPC thread started");
-            let mut last_connection_attempt = std::time::Instant::now() - Duration::from_secs(30);
+            let mut last_connection_attempt = std::time::Instant::now().checked_sub(Duration::from_secs(30)).unwrap();
 
             loop {
                 thread::sleep(Duration::from_secs(5));
@@ -36,7 +35,7 @@ impl DiscordRpcManager {
                 let enabled = match manager_clone.enabled.lock() {
                     Ok(guard) => *guard,
                     Err(e) => {
-                        log::error!("Failed to lock Discord RPC enabled status: {}", e);
+                        log::error!("Failed to lock Discord RPC enabled status: {e}");
                         false
                     }
                 };
@@ -47,7 +46,7 @@ impl DiscordRpcManager {
                         if let Some(client) = client_guard.as_mut() {
                             log::info!("Closing Discord connection (disabled)");
                             if let Err(e) = client.close() {
-                                log::error!("Failed to close connection: {}", e);
+                                log::error!("Failed to close connection: {e}");
                             }
                             *client_guard = None;
                         }
@@ -59,7 +58,7 @@ impl DiscordRpcManager {
                 let mut client_guard = match manager_clone.client.lock() {
                     Ok(guard) => guard,
                     Err(e) => {
-                        log::error!("Failed to lock Discord RPC client: {}", e);
+                        log::error!("Failed to lock Discord RPC client: {e}");
                         continue;
                     }
                 };
@@ -79,13 +78,13 @@ impl DiscordRpcManager {
                         Ok(mut client) => {
                             log::info!("Created client, connecting...");
                             if let Err(e) = client.connect() {
-                                log::error!("Failed to connect: {}", e);
+                                log::error!("Failed to connect: {e}");
                             } else {
                                 log::info!("Connected to Discord!");
                                 *client_guard = Some(client);
                             }
                         }
-                        Err(e) => log::error!("Failed to create client: {}", e),
+                        Err(e) => log::error!("Failed to create client: {e}"),
                     }
                 }
 
@@ -103,10 +102,10 @@ impl DiscordRpcManager {
 
                     // Try to update the activity
                     if let Err(e) = client.set_activity(activity) {
-                        log::error!("Failed to update activity, reconnecting: {}", e);
+                        log::error!("Failed to update activity, reconnecting: {e}");
                         // Connection might be dead, close it so we recreate next time
                         if let Err(e) = client.close() {
-                            log::error!("Failed to close broken connection: {}", e);
+                            log::error!("Failed to close broken connection: {e}");
                         }
                         *client_guard = None;
                     } else {
@@ -120,7 +119,7 @@ impl DiscordRpcManager {
     }
 
     pub fn set_enabled(&self, enabled: bool) {
-        log::info!("Setting Discord RPC enabled status to: {}", enabled);
+        log::info!("Setting Discord RPC enabled status to: {enabled}");
         if let Ok(mut enabled_guard) = self.enabled.lock() {
             *enabled_guard = enabled;
 
@@ -129,7 +128,7 @@ impl DiscordRpcManager {
                 if let Ok(mut client_guard) = self.client.lock() {
                     if let Some(client) = client_guard.as_mut() {
                         if let Err(e) = client.close() {
-                            log::error!("Failed to close Discord RPC connection: {}", e);
+                            log::error!("Failed to close Discord RPC connection: {e}");
                         }
                     }
                     *client_guard = None;
@@ -167,7 +166,7 @@ impl DiscordRpcManager {
                 );
 
             if let Err(e) = client.set_activity(activity) {
-                log::error!("Failed to update Discord activity: {}", e);
+                log::error!("Failed to update Discord activity: {e}");
             }
         }
     }

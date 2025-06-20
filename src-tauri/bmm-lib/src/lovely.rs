@@ -32,7 +32,7 @@ pub async fn ensure_version_dll_exists(game_path: &PathBuf) -> Result<Option<Pat
                     }
                 }
                 return Err(AppError::FileWrite {
-                    path: dll_path.to_path_buf(),
+                    path: dll_path.clone(),
                     source: e.to_string(),
                 });
             }
@@ -231,7 +231,7 @@ async fn download_version_dll(outfile: &mut File) -> Result<(), AppError> {
     log::info!("Downloading lovely injector for Windows from {}", url);
 
     #[cfg(target_os = "linux")]
-    log::info!("Downloading lovely injector for Linux/Proton from {}", url);
+    log::info!("Downloading lovely injector for Linux/Proton from {url}");
 
     // Download the ZIP file
     let client = reqwest::Client::new();
@@ -239,7 +239,7 @@ async fn download_version_dll(outfile: &mut File) -> Result<(), AppError> {
         .get(url)
         .send()
         .await
-        .map_err(|e| AppError::Network(format!("Failed to download lovely injector: {}", e)))?;
+        .map_err(|e| AppError::Network(format!("Failed to download lovely injector: {e}")))?;
 
     // Save to temp zip file
     let temp_zip = temp_dir.path().join("lovely.zip");
@@ -251,7 +251,7 @@ async fn download_version_dll(outfile: &mut File) -> Result<(), AppError> {
     let bytes = response
         .bytes()
         .await
-        .map_err(|e| AppError::Network(format!("Failed to read download response: {}", e)))?;
+        .map_err(|e| AppError::Network(format!("Failed to read download response: {e}")))?;
 
     std::io::copy(&mut bytes.as_ref(), &mut file).map_err(|e| AppError::FileWrite {
         path: temp_zip.clone(),
@@ -274,7 +274,7 @@ async fn download_version_dll(outfile: &mut File) -> Result<(), AppError> {
         let mut file = match archive.by_index(i) {
             Ok(file) => file,
             Err(e) => {
-                log::warn!("Failed to access zip entry: {}", e);
+                log::warn!("Failed to access zip entry: {e}");
                 continue;
             }
         };
@@ -288,7 +288,7 @@ async fn download_version_dll(outfile: &mut File) -> Result<(), AppError> {
         }
     }
 
-    return Err(AppError::InvalidState(
+    Err(AppError::InvalidState(
         "version.dll not found in downloaded zip".to_string(),
-    ));
+    ))
 }

@@ -26,7 +26,7 @@ impl Balatro {
         self.path.clone().join("Balatro.exe")
     }
     #[cfg(target_os = "linux")]
-    pub fn get_exe_path(&self) -> PathBuf {
+    #[must_use] pub fn get_exe_path(&self) -> PathBuf {
         self.path.clone().join("Balatro.exe")
     }
 
@@ -54,7 +54,7 @@ impl Balatro {
                 return Ok(contents);
             }
         }
-        error!("'{}' not found in the archive.", file_name);
+        error!("'{file_name}' not found in the archive.");
         Ok(Vec::new())
     }
 
@@ -179,7 +179,7 @@ impl Balatro {
         Ok(())
     }
 
-    pub fn is_valid(&self) -> bool {
+    #[must_use] pub fn is_valid(&self) -> bool {
         #[cfg(target_os = "macos")]
         {
             // For macOS, keep existing validation
@@ -208,7 +208,7 @@ impl Balatro {
         }
     }
 
-    pub fn from_custom_path(path: PathBuf) -> Option<Self> {
+    #[must_use] pub fn from_custom_path(path: PathBuf) -> Option<Self> {
         let balatro = Balatro { path };
         if balatro.is_valid() {
             Some(balatro)
@@ -218,7 +218,7 @@ impl Balatro {
     }
 }
 
-pub fn find_balatros() -> Vec<Balatro> {
+#[must_use] pub fn find_balatros() -> Vec<Balatro> {
     let paths: Vec<PathBuf> = get_balatro_paths();
     let mut balatros = Vec::new();
     for path in paths {
@@ -230,14 +230,14 @@ pub fn find_balatros() -> Vec<Balatro> {
     balatros
 }
 
-pub fn get_save_dir(linux_native: bool) -> PathBuf {
+#[must_use] pub fn get_save_dir(linux_native: bool) -> PathBuf {
     let mut save_dir = String::new();
     if cfg!(target_os = "macos") {
         let home_dir = format!("/Users/{}", std::env::var("USER").unwrap());
-        save_dir = format!("{}/Library/Application Support/Balatro", home_dir);
+        save_dir = format!("{home_dir}/Library/Application Support/Balatro");
     } else if cfg!(target_os = "windows") {
         let appdata = std::env::var("APPDATA").unwrap();
-        save_dir = format!("{}/Balatro", appdata);
+        save_dir = format!("{appdata}/Balatro");
     } else if cfg!(target_os = "linux") {
         if linux_native {
             let home = std::env::var("HOME").unwrap();
@@ -248,9 +248,7 @@ pub fn get_save_dir(linux_native: bool) -> PathBuf {
         }
     }
 
-    if save_dir.is_empty() {
-        panic!("Unsupported OS");
-    }
+    assert!(!save_dir.is_empty(), "Unsupported OS");
 
     PathBuf::from(save_dir)
 }

@@ -26,7 +26,7 @@ pub enum ModType {
 }
 
 impl std::fmt::Display for ModType {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             ModType::Steamodded => write!(f, "Steamodded"),
             ModType::Talisman => write!(f, "Talisman"),
@@ -61,6 +61,7 @@ struct ReleaseAsset {
     name: String,
     browser_download_url: String,
 }
+#[derive(Debug)]
 pub struct ModInstaller {
     client: reqwest::Client,
     pub mod_type: ModType,
@@ -68,7 +69,7 @@ pub struct ModInstaller {
 }
 
 impl ModInstaller {
-    pub fn new(installation_path: Option<&String>, mod_type: ModType) -> Self {
+    #[must_use] pub fn new(installation_path: Option<&String>, mod_type: ModType) -> Self {
         Self {
             client: reqwest::Client::new(),
             mod_type,
@@ -76,14 +77,14 @@ impl ModInstaller {
         }
     }
 
-    pub fn is_installed(&self) -> bool {
+    #[must_use] pub fn is_installed(&self) -> bool {
         let mods_dir = get_lovely_mods_dir(self.installation_path.as_ref());
 
         fs::read_dir(mods_dir)
             .map(|mut entries| {
                 entries.any(|e| {
                     e.ok()
-                        .map(|entry| {
+                        .is_some_and(|entry| {
                             let binding = entry.file_name();
                             let name = binding.to_str().unwrap_or("");
                             match self.mod_type {
@@ -91,7 +92,6 @@ impl ModInstaller {
                                 ModType::Talisman => name.contains("Talisman"),
                             }
                         })
-                        .unwrap_or(false)
                 })
             })
             .unwrap_or(false)
@@ -158,8 +158,7 @@ impl ModInstaller {
         match self.mod_type {
             ModType::Steamodded => {
                 info!(
-                    "Installing Steamodded version {} to {:?}",
-                    version, mods_dir
+                    "Installing Steamodded version {version} to {mods_dir:?}"
                 );
 
                 let mut headers = HeaderMap::new();
@@ -225,18 +224,16 @@ impl ModInstaller {
                 fs::remove_dir_all(temp_dir)?;
 
                 info!(
-                    "Successfully installed Steamodded version {} to {:?}",
-                    version, final_dir
+                    "Successfully installed Steamodded version {version} to {final_dir:?}"
                 );
                 Ok(final_dir.to_string_lossy().to_string())
             }
             ModType::Talisman => {
                 let url = format!(
-                    "https://github.com/MathIsFun0/Talisman/releases/download/{}/Talisman.zip",
-                    version
+                    "https://github.com/MathIsFun0/Talisman/releases/download/{version}/Talisman.zip"
                 );
 
-                info!("Downloading Talisman.zip from {}", url);
+                info!("Downloading Talisman.zip from {url}");
 
                 // Download and extract zip logic here
                 let response = self.client.get(&url).send().await?;
@@ -288,7 +285,7 @@ impl ModInstaller {
                         || dir_name.starts_with("Steamodded-smods-")
                     {
                         found = true;
-                        info!("Removing mod directory: {:?}", path);
+                        info!("Removing mod directory: {path:?}");
                         tokio_fs::remove_dir_all(&path).await?;
                     }
                 }

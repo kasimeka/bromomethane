@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct ModCollection {
     pub name: String,
     pub path: PathBuf,
@@ -11,7 +11,7 @@ pub struct ModCollection {
 }
 
 impl ModCollection {
-    pub fn new(name: String, path: PathBuf) -> Self {
+    #[must_use] pub fn new(name: String, path: PathBuf) -> Self {
         use std::hash::DefaultHasher;
         let mut hasher = DefaultHasher::new();
         name.hash(&mut hasher);
@@ -22,6 +22,7 @@ impl ModCollection {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct ModCollectionManager {
     collections: HashMap<u64, ModCollection>,
 }
@@ -33,7 +34,7 @@ impl Default for ModCollectionManager {
 }
 
 impl ModCollectionManager {
-    pub fn new() -> Self {
+    #[must_use] pub fn new() -> Self {
         Self {
             collections: HashMap::new(),
         }
@@ -66,7 +67,7 @@ impl ModCollectionManager {
         Ok(())
     }
 
-    pub fn get_collection(&self, hash: u64) -> Option<&ModCollection> {
+    #[must_use] pub fn get_collection(&self, hash: u64) -> Option<&ModCollection> {
         self.collections.get(&hash)
     }
 
@@ -127,4 +128,3 @@ impl ModCollectionManager {
         Ok(result)
     }
 }
-

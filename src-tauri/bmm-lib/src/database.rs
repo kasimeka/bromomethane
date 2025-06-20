@@ -4,11 +4,12 @@ use rusqlite::Connection;
 use serde::Serialize;
 use std::path::PathBuf;
 
+#[derive(Debug)]
 pub struct Database {
     conn: Connection,
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct InstalledMod {
     pub name: String,
     pub path: String,
@@ -23,14 +24,13 @@ impl Database {
         let config_dir = dirs::config_dir()
             .ok_or_else(|| AppError::DirNotFound(PathBuf::from("config directory")))?;
         let balatro_dir = config_dir.join("Balatro");
-        let storage_path = balatro_dir.join("bmm_storage.db");
 
         // Create directory if it doesn't exist
         if !balatro_dir.exists() {
             std::fs::create_dir_all(&balatro_dir).map_err(|e| {
-                AppError::DirNotFound(format!("Failed to create config directory: {}", e).into())
+                AppError::DirNotFound(format!("Failed to create config directory: {e}").into())
             })?;
-        };
+        }
 
         // Create the Balatro config directory if it doesn't exist
         let balatro_dir = config_dir.join("Balatro");
@@ -87,8 +87,7 @@ impl Database {
                 Err(e) => {
                     if retry_count == max_retries - 1 {
                         return Err(AppError::DatabaseInit(format!(
-                            "Failed to open database after {} attempts: {}",
-                            max_retries, e
+                            "Failed to open database after {max_retries} attempts: {e}"
                         )));
                     }
 
@@ -162,8 +161,7 @@ impl Database {
             if let Err(e) = old_conn_result {
                 if retry_count == max_retries - 1 {
                     return Err(AppError::DatabaseInit(format!(
-                        "Failed to open old database after {} retries: {}",
-                        max_retries, e
+                        "Failed to open old database after {max_retries} retries: {e}"
                     )));
                 }
 
@@ -175,7 +173,7 @@ impl Database {
 
             let old_conn = old_conn_result.unwrap();
             let new_conn = Connection::open(&temp_db_path).map_err(|e| {
-                AppError::DatabaseInit(format!("Failed to create new database: {}", e))
+                AppError::DatabaseInit(format!("Failed to create new database: {e}"))
             })?;
 
             // Initialize the new database with current schema
@@ -197,23 +195,22 @@ impl Database {
 
             // If backup fails, just log a warning but continue
             match std::fs::rename(db_path, &backup_path) {
-                Ok(_) => {}
+                Ok(()) => {}
                 Err(e) => {
-                    log::warn!("Failed to backup old database, continuing anyway: {}", e);
+                    log::warn!("Failed to backup old database, continuing anyway: {e}");
                     // Try to directly remove the old file if we can't rename it
                     if let Err(e) = std::fs::remove_file(db_path) {
-                        log::warn!("Failed to remove old database: {}", e);
+                        log::warn!("Failed to remove old database: {e}");
                     }
                 }
             }
 
             // Replace with the new one
             match std::fs::rename(&temp_db_path, db_path) {
-                Ok(_) => return Ok(()),
+                Ok(()) => return Ok(()),
                 Err(e) => {
                     return Err(AppError::DatabaseInit(format!(
-                        "Failed to install new database: {}",
-                        e
+                        "Failed to install new database: {e}"
                     )));
                 }
             }
@@ -372,8 +369,7 @@ impl Database {
             })
         } else {
             Err(AppError::InvalidState(format!(
-                "Mod {} not found",
-                mod_name
+                "Mod {mod_name} not found"
             )))
         }
     }
