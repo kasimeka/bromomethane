@@ -1,20 +1,32 @@
 {
-	"$schema": "../gen/schemas/desktop-schema.json",
-	"identifier": "default",
-	"description": "Capability for the main window",
-	"windows": ["main"],
-	"permissions": [
-		"shell:allow-open",
-		"shell:default",
-		"dialog:default",
-		"fs:default",
-		"fs:read-app-specific-dirs-recursive",
-		"fs:create-app-specific-dirs",
-		"core:event:allow-listen",
-		"core:event:default",
-		"core:window:allow-show",
-		"core:window:allow-set-focus",
-		"window-state:default"
-	],
-	"platforms": ["windows", "macOS"]
+    "$schema": "../gen/schemas/desktop-schema.json",
+    "identifier": "default",
+    "description": "Capability for the main window",
+    "windows": [
+        "main"
+    ],
+    "permissions": [
+        "shell:allow-open",
+        "shell:default",
+        "dialog:default",
+        "fs:default",
+        "fs:read-app-specific-dirs-recursive",
+        "fs:create-app-specific-dirs",
+        "core:event:allow-listen",
+        "core:event:default",
+        "core:window:allow-show",
+        "core:window:allow-set-focus",
+        "window-state:default",
+        "fs:create-app-specific-dirs",
+        "core:event:allow-listen",
+        "core:event:default",
+        "fs:create-app-specific-dirs",
+        "core:event:default",
+        "core:event:allow-listen"
+    ],
+    "platforms": [
+        "windows",
+        "macOS",
+        "linux"
+    ]
 }
