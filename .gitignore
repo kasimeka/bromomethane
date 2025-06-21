@@ -12,3 +12,6 @@ vite.config.ts.timestamp-*
 /.hack/linux/bundles
 /.hack/linux/pkgbuild/PKGBUILD
 result
+/target/
+/gen/schemas
+storage.db

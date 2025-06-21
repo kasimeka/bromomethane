@@ -2135,11 +2135,6 @@ fn exit_application(app_handle: tauri::AppHandle) {
     app_handle.exit(0);
 }
 
-// #[tauri::command]
-// async fn get_installed_mods() -> Vec<String> {
-//     bmm_lib::finder::get_installed_mods()
-// }
-
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let result = tauri::Builder::default()
@@ -2155,7 +2150,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
-        .plugin(tauri_plugin_prevent_default::init())
+        .plugin(tauri_plugin_prevent_default::debug())
         .setup(|app| {
             let db = map_error(Database::new())?;
 
