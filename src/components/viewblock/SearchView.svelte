@@ -218,6 +218,18 @@
 		}
 	});
 
+	let indexes: number[] = $state([]);
+	$effect(async () => {
+		await invoke("fetch_thumbnails_by_idx", {indexes});
+		const mods_ = await invoke<Array<Mod>>("get_mod_list");
+		for (const n of indexes) {
+			mods_[n].image ||= "images/cover.jpg";
+		}
+		modsStore.set(mods_);
+		searchResults = indexes.map(idx => mods_[idx]);
+	});
+
+
 	onMount(() => {
 		// Initialize the search index
 		searchIndex = new FlexSearch.Index({
@@ -254,7 +266,7 @@
 		});
 	});
 
-	const handleSearch = debounce(() => {
+	const handleSearch = debounce(async () => {
 		if (!searchIndex || searchQuery.length < 2) {
 			searchResults = [];
 			showSpinner = false;
@@ -266,8 +278,10 @@
 		try {
 			const searchTerm = searchQuery.toLowerCase();
 			const results = searchIndex.search(searchTerm);
-
-			searchResults = results.map((idx: number) => mods[idx]);
+			indexes = results;
+			searchResults = results.map(idx => mods[idx]);
+			showSpinner = false;
+			isSearching = false;
 		} catch (error) {
 			console.error("Search failed:", error);
 			searchResults = [];

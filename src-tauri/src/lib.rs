@@ -20,7 +20,7 @@ use tauri_plugin_window_state::StateFlags;
 use walkdir::WalkDir;
 use zip::ZipArchive;
 
-use balatro_mod_index::{forge, mods::ModIndex};
+use balatro_mod_index::{forge, lfs, mods::ModIndex};
 
 use bmm_lib::{
     balamod::find_balatros,
@@ -79,10 +79,8 @@ async fn mod_update_available(
         return Ok(false);
     }
 
-    // Try to get the cached mods
-    let cached_mods = match crate::cache::load_cache().map_err(|e| e.to_string())? {
-        Some((mods, _)) => mods,
-        None => return Ok(false), // No cache available
+    let Some((cached_mods, _)) = crate::cache::load_cache().map_err(|e| e.to_string())? else {
+        return Ok(false);
     };
 
     // Look for the mod in the cache by matching either title or folderName
@@ -186,9 +184,12 @@ async fn init_index(state: tauri::State<'_, AppState<'_>>) -> Result<(), String>
         )
         .await?;
 
-    index.mods.sort_by(|(_, a), (_, b)| a.meta.title.cmp(&b.meta.title));
-    index.mods.sort_by(|(_, a), (_, b)| b.meta.last_updated.cmp(&a.meta.last_updated));
-
+    index
+        .mods
+        .sort_by(|(_, a), (_, b)| a.meta.title.cmp(&b.meta.title));
+    index
+        .mods
+        .sort_by(|(_, a), (_, b)| b.meta.last_updated.cmp(&a.meta.last_updated));
 
     let mut i = state.index.write().map_err(|e| e.to_string())?;
     *i = index;
@@ -208,6 +209,29 @@ async fn fetch_thumbnails_page(
     index
         .mut_fetch_blobs(&state.reqwest, CONCURRENCY_FACTOR, offset, count, false)
         .await?;
+
+    let mut i = state.index.write().map_err(|e| e.to_string())?;
+    *i = index;
+    Ok(())
+}
+#[tauri::command]
+async fn fetch_thumbnails_by_idx(
+    state: tauri::State<'_, AppState<'_>>,
+    indexes: Vec<usize>,
+) -> Result<(), String> {
+    if std::env::var("BMM_NO_THUMBNAILS").is_ok() {
+        return Ok(());
+    }
+    let mut index = state.index.read().map_err(|e| e.to_string())?.clone();
+
+    let mut blobs = index.mods.iter_mut().map(|(_, m)| m.thumbnail.as_mut());
+    let mut thumbnails = Vec::new();
+    for index_val in &indexes {
+        if let Some(Some(hysm)) = blobs.nth(*index_val) {
+            thumbnails.push(hysm);
+        }
+    }
+    lfs::mut_fetch_blobs(&mut thumbnails, &state.reqwest, CONCURRENCY_FACTOR).await;
 
     let mut i = state.index.write().map_err(|e| e.to_string())?;
     *i = index;
@@ -1940,9 +1964,9 @@ async fn backup_local_mod(path: String) -> Result<(), String> {
     std::fs::write(
         backup_path.join("metadata.json"),
         serde_json::to_string_pretty(&metadata)
-            .map_err(|e| format!("Failed to serialize metadata: {}", e))?,
+            .map_err(|e| format!("Failed to serialize metadata: {e}"))?,
     )
-    .map_err(|e| format!("Failed to write metadata: {}", e))?;
+    .map_err(|e| format!("Failed to write metadata: {e}"))?;
 
     Ok(())
 }
@@ -2199,6 +2223,7 @@ pub fn run() {
             delete_manual_mod,
             exit_application,
             fetch_thumbnails_page,
+            fetch_thumbnails_by_idx,
             find_steam_balatro,
             force_remove_mod,
             get_balatro_path,

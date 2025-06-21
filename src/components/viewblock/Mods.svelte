@@ -742,7 +742,7 @@
 		}
 	}
 
-	 $: fetchThumbnailsPage = async () => {
+	 $: fetchThumbnails = async () => {
 		const offset = ($currentPage - 1) * $itemsPerPage;
 		await invoke("fetch_thumbnails_page", { offset, count: $itemsPerPage });
 
@@ -756,7 +756,7 @@
 		modsStore.set(mods);
 		await invoke("update_last_fetched");
 	}
-	$: {if (!isLoading) fetchThumbnailsPage();}
+	$: {if (!isLoading) fetchThumbnails();}
 
 	$: totalPages = Math.ceil(filteredMods.length / $itemsPerPage);
 	$: paginatedMods = filteredMods.slice(

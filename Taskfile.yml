@@ -47,5 +47,5 @@ tasks:
     desc: Clean build artifacts
     cmds:
       - cmd: echo Removing build artifacts...
-      - cmd: cd ./src-tauri && cargo clean {{.NO_OUTPUT}}
+      - cmd: cargo clean {{.NO_OUTPUT}}
 
