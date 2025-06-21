@@ -778,9 +778,9 @@
 		}
 	}
 
-	 $: fetchThumbnails = async () => {
+	 $: fetchThumbnailsPage = async () => {
 		const offset = ($currentPage - 1) * $itemsPerPage;
-		await invoke("fetch_thumbnails", { offset, count: $itemsPerPage });
+		await invoke("fetch_thumbnails_page", { offset, count: $itemsPerPage });
 
 		const mods = await invoke<Array<Mod>>("get_mod_list");
 
@@ -792,7 +792,7 @@
 		modsStore.set(mods);
 		await invoke("update_last_fetched");
 	}
-	$: {if (!isLoading) fetchThumbnails(); }
+	$: {if (!isLoading) fetchThumbnailsPage();}
 
 	$: totalPages = Math.ceil(sortedAndFilteredMods.length / $itemsPerPage);
 	$: paginatedMods = sortedAndFilteredMods.slice(

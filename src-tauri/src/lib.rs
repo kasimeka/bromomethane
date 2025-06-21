@@ -40,6 +40,7 @@ fn map_error<T>(result: Result<T, AppError>) -> Result<T, String> {
 struct AppState<'tree> {
     db: Mutex<Database>,
     index: RwLock<ModIndex<'tree>>,
+    reqwest: reqwest::Client,
 }
 
 #[derive(Clone, serde::Serialize)]
@@ -173,8 +174,16 @@ async fn list_directories(path: &str) -> Result<Vec<String>, String> {
 const CONCURRENCY_FACTOR: usize = 50;
 #[tauri::command]
 async fn init_index(state: tauri::State<'_, AppState<'_>>) -> Result<(), String> {
-    let reqwest = reqwest::Client::new();
-    let mut index = ModIndex::from_reqwest(&reqwest, <&forge::Tree>::default()).await?;
+    let mut index = ModIndex::from_reqwest(&state.reqwest, <&forge::Tree>::default()).await?;
+    index
+        .mut_fetch_blob_urls(
+            &state.reqwest,
+            CONCURRENCY_FACTOR,
+            0,
+            index.mods.len(),
+            true,
+        )
+        .await?;
     let mods = &mut index.mods;
     mods.sort_by(|(_, a), (_, b)| a.meta.title.cmp(&b.meta.title));
     mods.sort_by(|(_, a), (_, b)| b.meta.last_updated.cmp(&a.meta.last_updated));
@@ -184,7 +193,7 @@ async fn init_index(state: tauri::State<'_, AppState<'_>>) -> Result<(), String>
     Ok(())
 }
 #[tauri::command]
-async fn fetch_thumbnails(
+async fn fetch_thumbnails_page(
     state: tauri::State<'_, AppState<'_>>,
     offset: usize,
     count: usize,
@@ -192,13 +201,9 @@ async fn fetch_thumbnails(
     if std::env::var("BMM_NO_THUMBNAILS").is_ok() {
         return Ok(());
     }
-    let reqwest = reqwest::Client::new();
     let mut index = state.index.read().map_err(|e| e.to_string())?.clone();
     index
-        .mut_fetch_blob_urls(&reqwest, CONCURRENCY_FACTOR, offset, count, true)
-        .await?;
-    index
-        .mut_fetch_blobs(&reqwest, CONCURRENCY_FACTOR, offset, count, false)
+        .mut_fetch_blobs(&state.reqwest, CONCURRENCY_FACTOR, offset, count, false)
         .await?;
 
     let mut i = state.index.write().map_err(|e| e.to_string())?;
@@ -2134,11 +2139,6 @@ fn exit_application(app_handle: tauri::AppHandle) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // Set up panic hook with proper logging
-    // panic::set_hook(Box::new(|panic_info| {
-    //     log::error!("Application crashed: {:?}", panic_info);
-    // }));
-
     let result = tauri::Builder::default()
         .plugin(
             tauri_plugin_window_state::Builder::default()
@@ -2154,12 +2154,12 @@ pub fn run() {
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_prevent_default::init())
         .setup(|app| {
-            // Initialize database with error handling
             let db = map_error(Database::new())?;
 
             app.manage(AppState {
                 db: Mutex::new(db),
                 index: RwLock::new(ModIndex::default()),
+                reqwest: reqwest::Client::new(),
             });
 
             let app_dir = app
@@ -2193,7 +2193,7 @@ pub fn run() {
             clone_repo,
             delete_manual_mod,
             exit_application,
-            fetch_thumbnails,
+            fetch_thumbnails_page,
             find_steam_balatro,
             force_remove_mod,
             get_balatro_path,
@@ -2217,7 +2217,6 @@ pub fn run() {
             is_security_warning_acknowledged,
             launch_balatro,
             list_directories,
-            // load_mods_cache,
             load_versions_cache,
             mod_update_available,
             open_directory,
