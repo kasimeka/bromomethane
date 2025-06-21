@@ -175,7 +175,7 @@ pub fn is_repository_directory(path: &str) -> bool {
 //
 //     let response = client
 //         .get(&commits_url)
-//         .header("User-Agent", "balatro-mod-manager")
+//         .header("User-Agent", "bromomethane")
 //         .send()
 //         .await
 //         .map_err(|e| format!("Failed to fetch commits: {}", e))?;
@@ -208,7 +208,7 @@ pub fn is_repository_directory(path: &str) -> bool {
 //         );
 //         let detail_response = client
 //             .get(&commit_detail_url)
-//             .header("User-Agent", "balatro-mod-manager")
+//             .header("User-Agent", "bromomethane")
 //             .send()
 //             .await
 //             .map_err(|e| format!("Failed to fetch commit details: {}", e))?;

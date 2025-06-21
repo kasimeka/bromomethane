@@ -1,5 +1,5 @@
 {
-  nixConfig.bash-prompt-prefix = ''(BMM) '';
+  nixConfig.bash-prompt-prefix = ''(bmm) '';
 
   inputs = {
     gitignore = {
@@ -92,18 +92,18 @@
 
             meta = {
               inherit mainProgram;
-              homepage = "https://balatro-mod-manager.dasguney.com";
+              homepage = "https://github.com/kasimeka/bromomethane";
               license = pkgs.lib.licenses.gpl3;
               platforms = with pkgs.lib.platforms; linux ++ darwin; # darwin support untested
             };
           };
       in {
-        packages.default = self.packages.${system}.balatro-mod-manager;
-        packages.balatro-mod-manager = drv;
+        packages.default = self.packages.${system}.bromomethane;
+        packages.bromomethane = drv;
 
         devShells.default = self.devShells.${system}.pure;
         devShells.pure = pkgs.mkShell {
-          inputsFrom = [self.packages.${system}.balatro-mod-manager];
+          inputsFrom = [self.packages.${system}.bromomethane];
           packages = with pkgs;
             lib.optionals stdenv.isLinux [xdg-utils]
             ++ [

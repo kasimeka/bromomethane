@@ -2037,7 +2037,7 @@ async fn remove_backup(path: String) -> Result<(), String> {
 }
 
 fn get_backup_dir() -> Result<PathBuf, String> {
-    let temp_dir = std::env::temp_dir().join("balatro_mod_manager_backups");
+    let temp_dir = std::env::temp_dir().join("bromomethane_backups");
     std::fs::create_dir_all(&temp_dir)
         .map_err(|e| format!("Failed to create backup directory: {}", e))?;
     Ok(temp_dir)

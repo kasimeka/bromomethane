@@ -1,6 +1,5 @@
 use crate::errors::AppError;
 use chrono::Local;
-use log::LevelFilter;
 use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;
@@ -44,7 +43,9 @@ pub fn init_logger() -> Result<(), AppError> {
     // Create a combined writer for both file and stdout
     let file_writer = CustomWriter { file };
 
-    env_logger::Builder::from_env(env_logger::Env::new().default_filter_or("info")).init();
+    env_logger::Builder::from_env(env_logger::Env::new().default_filter_or("info"))
+        .target(env_logger::Target::Pipe(Box::new(file_writer)))
+        .init();
 
     // Log some initial messages to test
     log::info!("Logging system initialized at {}", Local::now());

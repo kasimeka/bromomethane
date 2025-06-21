@@ -1,7 +1,7 @@
 [package]
 name = "bmm-lib"
 version = "0.2.7"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 anyhow = "1.0.98"

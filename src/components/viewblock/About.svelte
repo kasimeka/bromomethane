@@ -23,12 +23,12 @@
 <div class="container default-scrollbar">
 	<div class="about-container">
 		<div class="content">
-			<h2>About Balatro Mod Manager</h2>
+			<h2>About bromomethane</h2>
 	
 			<div>
 				<h3>What is BMM?</h3>
 				<p>
-					Balatro Mod Manager (BMM) is a tool designed to help you manage
+					bromomethane is a tool designed to help you manage
 					and install mods for the game Balatro. It provides an
 					easy-to-use interface for mod management while maintaining the
 					game's unique aesthetic.
@@ -70,7 +70,7 @@
 				</button>
 			</div>
 	
-			<p id="versiontext">Current version: v0.2.7</p>
+			<p id="versiontext">Current version: v0.1.0</p>
 		</div>
 	
 		<div class="profile-section">

@@ -93,7 +93,7 @@ impl From<i32> for Category {
 pub fn clear_cache() -> Result<(), AppError> {
     let cache_dir = dirs::cache_dir()
         .ok_or_else(|| AppError::DirNotFound(PathBuf::from("cache directory")))?
-        .join("balatro-mod-manager");
+        .join("bromomethane");
 
     // Delete mods cache
     let mods_cache = cache_dir.join("mods.cache.bin.gz");
@@ -126,7 +126,7 @@ pub fn clear_cache() -> Result<(), AppError> {
 pub fn save_versions_cache(mod_type: &str, versions: &[String]) -> Result<(), AppError> {
     let mut path = dirs::cache_dir()
         .ok_or_else(|| AppError::DirNotFound(PathBuf::from("cache directory")))?
-        .join("balatro-mod-manager");
+        .join("bromomethane");
 
     std::fs::create_dir_all(&path).map_err(|e| AppError::DirCreate {
         path: path.clone(),
@@ -175,7 +175,7 @@ pub fn save_versions_cache(mod_type: &str, versions: &[String]) -> Result<(), Ap
 pub fn load_versions_cache(mod_type: &str) -> Result<Option<Vec<String>>, AppError> {
     let path = dirs::cache_dir()
         .ok_or_else(|| AppError::DirNotFound(PathBuf::from("cache directory")))?
-        .join("balatro-mod-manager")
+        .join("bromomethane")
         .join(format!("versions-{mod_type}.cache.bin.gz"));
 
     let mut file = match File::open(&path) {
@@ -230,7 +230,7 @@ struct VersionCache {
 pub fn get_cache_path() -> Result<PathBuf, AppError> {
     let mut path = dirs::cache_dir()
         .ok_or_else(|| AppError::DirNotFound(PathBuf::from("cache directory")))?
-        .join("balatro-mod-manager");
+        .join("bromomethane");
 
     std::fs::create_dir_all(&path).map_err(|e| AppError::DirCreate {
         path: path.clone(),

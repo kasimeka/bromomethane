@@ -234,7 +234,7 @@ pub fn get_lovely_mods_dir(
             for pid in pids {
                 if let Ok(name) = name(pid as i32) {
                     if (name.to_lowercase().contains("balatro")
-                        && name.to_lowercase() != "balatro-mod-manager")
+                        && name.to_lowercase() != "bromomethane")
                         | (name == "love")
                     {
                         return true;

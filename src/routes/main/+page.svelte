@@ -195,7 +195,7 @@
 <div class="main-page">
 	<header>
 		<div class="header-content">
-			<h1>Balatro Mod Manager</h1>
+			<h1>bromomethane</h1>
 			<LaunchButton />
 		</div>
 		<nav>
@@ -273,7 +273,7 @@
 		{onError}
 	/>
 
-	<div class="version-text">v0.2.7</div>
+	<div class="version-text">v0.1.0</div>
 </div>
 
 <style>
