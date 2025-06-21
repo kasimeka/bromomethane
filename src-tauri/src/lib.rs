@@ -175,18 +175,20 @@ const CONCURRENCY_FACTOR: usize = 50;
 #[tauri::command]
 async fn init_index(state: tauri::State<'_, AppState<'_>>) -> Result<(), String> {
     let mut index = ModIndex::from_reqwest(&state.reqwest, <&forge::Tree>::default()).await?;
+
     index
         .mut_fetch_blob_urls(
             &state.reqwest,
             CONCURRENCY_FACTOR,
             0,
             index.mods.len(),
-            true,
+            false,
         )
         .await?;
-    let mods = &mut index.mods;
-    mods.sort_by(|(_, a), (_, b)| a.meta.title.cmp(&b.meta.title));
-    mods.sort_by(|(_, a), (_, b)| b.meta.last_updated.cmp(&a.meta.last_updated));
+
+    index.mods.sort_by(|(_, a), (_, b)| a.meta.title.cmp(&b.meta.title));
+    index.mods.sort_by(|(_, a), (_, b)| b.meta.last_updated.cmp(&a.meta.last_updated));
+
 
     let mut i = state.index.write().map_err(|e| e.to_string())?;
     *i = index;
@@ -201,6 +203,7 @@ async fn fetch_thumbnails_page(
     if std::env::var("BMM_NO_THUMBNAILS").is_ok() {
         return Ok(());
     }
+
     let mut index = state.index.read().map_err(|e| e.to_string())?.clone();
     index
         .mut_fetch_blobs(&state.reqwest, CONCURRENCY_FACTOR, offset, count, false)

@@ -392,28 +392,6 @@
 		border-color: #ea9600;
 		transition: border-color 0.2s ease;
 	}
-	/* legacy search button code */
-	/* .search-button {
-		padding: 0.75rem 1rem;
-		background: #ea9600;
-		border: 2px solid #f4eee0;
-		border-radius: 6px;
-		color: #f4eee0;
-		cursor: pointer;
-		display: flex;
-		align-items: center;
-		transition: all 0.2s ease;
-	}
-
-	.search-button:hover {
-		background: #f4eee0;
-		color: #393646;
-	}
-
-	.search-button:active {
-		transform: scale(0.95);
-		padding: 0.75rem 0.95rem;
-	} */
 
 	.resulting-text {
 		position: absolute;
