@@ -634,13 +634,7 @@
 				await invoke("update_last_fetched");
 			}
 
-			const mods = (await invoke<Array<Mod>>("get_mod_list")).map((m) => {
-				m.categories = m
-					.categories
-					.map(cat => categoryMap[cat])
-					.filter(cat => !!cat);
-				return m;
-			});
+			const mods = await invoke<Array<Mod>>("get_mod_list");
 
 			return mods;
 		} catch (error) {
@@ -663,25 +657,6 @@
 		{ name: "Resource Packs", icon: FolderHeart },
 		{ name: "API", icon: Gamepad2 },
 	];
-
-	const categoryMap: Record<string, Category> = {
-		Content: Category.Content,
-		content: Category.Content,
-		Joker: Category.Joker,
-		joker: Category.Joker,
-		"Quality of Life": Category.QualityOfLife,
-		"quality of life": Category.QualityOfLife,
-		Technical: Category.Technical,
-		technical: Category.Technical,
-		Miscellaneous: Category.Miscellaneous,
-		miscellaneous: Category.Miscellaneous,
-		"Resource Packs": Category.ResourcePacks,
-		"resource packs": Category.ResourcePacks,
-		Resources: Category.ResourcePacks,
-		resources: Category.ResourcePacks,
-		API: Category.API,
-		api: Category.API,
-	};
 
 	function handleModClick(mod: Mod) {
 		currentModView.set(mod);
@@ -807,14 +782,7 @@
 		const offset = ($currentPage - 1) * $itemsPerPage;
 		await invoke("fetch_thumbnails", { offset, count: $itemsPerPage });
 
-		const mods = (await invoke<Array<Mod>>("get_mod_list"))
-			.map((m) => {
-				m.categories = m
-					.categories
-					.map(cat => categoryMap[cat])
-					.filter(cat => !!cat);
-				return m;
-			});
+		const mods = await invoke<Array<Mod>>("get_mod_list");
 
 		const next = offset + $itemsPerPage;
 		for (let n = offset; n < next; n++) {

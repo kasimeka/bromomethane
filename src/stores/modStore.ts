@@ -109,16 +109,16 @@ interface InstallationStatus {
 	[key: string]: boolean;
 }
 
-
-export enum Category {
-	Content = 0,
-	Joker = 1,
-	QualityOfLife = 2,
-	Technical = 3,
-	Miscellaneous = 4,
-	ResourcePacks = 5,
-	API = 6
-}
+export const Category = {
+	Content: 0,
+	Joker: 1,
+	QualityOfLife: 2,
+	Technical: 3,
+	Miscellaneous: 4,
+	ResourcePacks: 5,
+	API: 6
+} as const;
+export type Category = (typeof Category)[keyof typeof Category];
 
 
 export const currentModView = writable<Mod | null>(null);
@@ -130,14 +130,6 @@ export const modsStore = writable<Mod[]>([]);
 export const installationStatus: Writable<InstallationStatus> = writable({});
 
 export const loadingStates2 = writable<{ [key: string]: boolean }>({});
-//
-//
-// modsStore.subscribe(value => {
-// 	if (typeof window !== 'undefined') {
-// 		localStorage.setItem('mods', JSON.stringify(value));
-// 	}
-// });
-
 
 function createPersistentCategory() {
 	const storedCategory = localStorage.getItem('currentCategory') || "Popular";
