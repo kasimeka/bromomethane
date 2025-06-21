@@ -33,22 +33,11 @@ export interface LocalMod {
 	is_tracked: boolean;
 }
 
-export enum SortOption {
-	NameAsc = "name_asc",
-	NameDesc = "name_desc",
-	LastUpdatedAsc = "updated_asc",
-	LastUpdatedDesc = "updated_desc"
-}
-
 export const backgroundEnabled = writable(false);
-
-export const currentSort = writable<SortOption>(SortOption.LastUpdatedDesc);
 
 export const updateAvailableStore = writable<{ [key: string]: boolean }>({});
 
 export const modEnabledStore = writable<Record<string, boolean>>({});
-
-
 
 export interface UninstallDialogState {
 	show: boolean;
@@ -56,7 +45,6 @@ export interface UninstallDialogState {
 	modPath: string;
 	dependents: string[];
 }
-
 
 export const uninstallDialogStore = writable<UninstallDialogState>({
 	show: false,

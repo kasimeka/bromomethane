@@ -16,9 +16,7 @@
 	import ModView from "./ModView.svelte";
 	import { fly } from "svelte/transition";
 	import {
-		SortOption,
 		backgroundEnabled,
-		currentSort,
 		loadingStates2,
 	} from "../../stores/modStore";
 	import { ArrowUpDown } from "lucide-svelte";
@@ -729,44 +727,10 @@
 		}
 	});
 
-	function sortMods(mods: Mod[], sortOption: SortOption): Mod[] {
-		switch (sortOption) {
-			case SortOption.NameAsc:
-				return mods.toSorted((a, b) => a.title.localeCompare(b.title));
-			case SortOption.NameDesc:
-				return mods.toSorted((a, b) => b.title.localeCompare(a.title));
-			case SortOption.LastUpdatedAsc:
-				return sortMods(mods, SortOption.NameAsc)
-						.toSorted((a, b) => a.last_updated - b.last_updated);
-			case SortOption.LastUpdatedDesc:
-				return sortMods(mods, SortOption.NameAsc)
-						.toSorted((a, b) => b.last_updated - a.last_updated);
-			default:
-				return mods;
-		}
-	};
-
-	// Add sort handler
-	function handleSortChange(event: Event) {
-		const select = event.target as HTMLSelectElement;
-		currentSort.set(select.value as SortOption);
-		// Force a UI update by creating a new array reference
-		sortedAndFilteredMods = [
-			...sortMods(filteredMods, select.value as SortOption),
-		];
-		// Reset to first page when sort changes to prevent out-of-bounds issues
-		if ($currentPage > 1) {
-			currentPage.set(1);
-			startPage = 1;
-		}
-	}
-
-	$: sortedAndFilteredMods = sortMods(filteredMods, $currentSort);
-
 	$: {
-		if (sortedAndFilteredMods) {
+		if (filteredMods) {
 			// Ensure pagination is updated
-			paginatedMods = sortedAndFilteredMods.slice(
+			paginatedMods = filteredMods.slice(
 				($currentPage - 1) * $itemsPerPage,
 				$currentPage * $itemsPerPage,
 			);
@@ -794,8 +758,8 @@
 	}
 	$: {if (!isLoading) fetchThumbnailsPage();}
 
-	$: totalPages = Math.ceil(sortedAndFilteredMods.length / $itemsPerPage);
-	$: paginatedMods = sortedAndFilteredMods.slice(
+	$: totalPages = Math.ceil(filteredMods.length / $itemsPerPage);
+	$: paginatedMods = filteredMods.slice(
 		($currentPage - 1) * $itemsPerPage,
 		$currentPage * $itemsPerPage,
 	);
@@ -1009,32 +973,6 @@
 							onclick={nextPage}
 							disabled={$currentPage === totalPages}>Next</button
 						>
-					</div>
-
-					<div
-						class="sort-controls"
-						in:fly={{ duration: 400, y: 10, opacity: 0.2 }}
-					>
-						<div class="sort-wrapper">
-							<ArrowUpDown size={16} />
-							<select
-								value={$currentSort}
-								onchange={handleSortChange}
-							>
-								<option value={SortOption.NameAsc}
-									>Name (A-Z)</option
-								>
-								<option value={SortOption.NameDesc}
-									>Name (Z-A)</option
-								>
-								<option value={SortOption.LastUpdatedDesc}
-									>Last Updated</option
-								>
-								<option value={SortOption.LastUpdatedAsc}
-									>Oldest Updated</option
-								>
-							</select>
-						</div>
 					</div>
 				</div>
 
@@ -1612,85 +1550,11 @@
 		padding-bottom: 1rem;
 	}
 
-	.sort-controls {
-		position: absolute;
-		/*top: 0.25rem; Increased from 2rem*/
-		right: 4rem; /*Increased from 2.5rem*/
-		z-index: 1000;
-		margin: 0;
-		background: transparent;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-		/*transform: translateY(0); /*Reset any transforms*/
-	}
-	/**/
-	/*.sort-controls {*/
-	/*position: absolute;*/
-	/*top: 1rem;*/
-	/*right: 3rem;*/
-	/*z-index: 1000;*/
-	/*margin: 0;*/
-	/*background: transparent;*/
-	/*}*/
-
-	.sort-wrapper {
-		background: #ea9600;
-		border: 2px solid #f4eee0;
-		padding: 0.5rem;
-		border-radius: 6px;
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		transition: all 0.2s ease;
-		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-	}
-
 	.mods-wrapper {
 		position: relative;
 		/*192px being the width of the catagories + seperator*/
 		width: calc(100% - 192px);
 		padding: 0 1rem;
-	}
-
-	.sort-wrapper :global(svg) {
-		color: #f4eee0;
-	}
-
-	select {
-		background: #ea9600;
-		color: #f4eee0;
-		border: none;
-		font-family: "M6X11", sans-serif;
-		font-size: 1rem;
-		padding: 0.25rem 1.5rem 0.25rem 0.5rem;
-		border-radius: 4px;
-		cursor: pointer;
-		-webkit-appearance: none;
-		-moz-appearance: none;
-		appearance: none;
-		background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23F4EEE0%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E");
-		background-repeat: no-repeat;
-		background-position: right 0.5em top 50%;
-		background-size: 0.65em auto;
-	}
-
-	select:hover {
-		background-color: #f0a620;
-	}
-
-	select:focus {
-		outline: none;
-		box-shadow: 0 0 0 2px #f4eee0;
-	}
-
-	select option {
-		background: #ea9600;
-		color: #f4eee0;
-		padding: 0.5rem;
-	}
-
-	.sort-wrapper:hover {
-		transform: translateY(-1px);
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 	}
 
 	.loading-container {
@@ -1721,10 +1585,6 @@
 
 		.controls-container {
 			margin-bottom: 0.5rem;
-		}
-
-		.sort-controls {
-			right: 1rem;
 		}
 	}
 </style>
