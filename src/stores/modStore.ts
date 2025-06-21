@@ -13,7 +13,7 @@ export interface Mod {
 	requires_talisman: boolean;
 	publisher: string;
 	repo: string;
-	downloadURL: string;
+	download_url: string;
 	folderName: string;
 	version: string;
 	installed: boolean;

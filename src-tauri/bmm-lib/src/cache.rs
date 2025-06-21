@@ -28,22 +28,18 @@ struct ModCache {
 pub struct Mod {
     pub title: String,
     pub description: String,
-    pub image: String,
-    #[serde(rename = "categories")]
+    pub image: Option<String>,
     pub categories: Vec<Category>,
-    #[serde(rename = "colors")]
     pub colors: ColorPair,
     pub installed: bool,
-    #[serde(rename = "requires_steamodded")]
     pub requires_steamodded: bool,
-    #[serde(rename = "requires_talisman")]
     pub requires_talisman: bool,
     pub publisher: String,
     pub repo: String,
-    #[serde(rename = "downloadURL")]
     pub download_url: String,
-    pub folderName: Option<String>,
+    pub folder_name: Option<String>,
     pub version: Option<String>,
+    pub last_updated: u64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -371,7 +367,7 @@ mod tests {
                 publisher: "Test".into(),
                 repo: "test/test".into(),
                 download_url: "https://test.com/mod.zip".into(),
-                folderName: None,
+                folder_name: None,
                 version: None,
             };
 

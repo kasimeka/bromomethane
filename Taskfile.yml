@@ -8,7 +8,7 @@ tasks:
   debug:
     desc: Start development server
     cmds:
-      - cmd: cargo tauri dev
+      - cmd: RUST_LOG=debug cargo tauri dev
 
   default:
     - task: debug

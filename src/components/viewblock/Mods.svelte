@@ -79,6 +79,7 @@
 	let localMods: LocalMod[] = [];
 	let isLoadingLocalMods = false;
 
+
 	async function handleModToggled(): Promise<void> {
 		if ($currentCategory === "Installed Mods") {
 			// First check catalog mods
@@ -289,21 +290,12 @@
 
 		// Separate async function for initialization
 		const initialize = async () => {
-			const cached = await getFromCache();
-			if (
-				cached &&
-				Date.now() - cached.timestamp * 1000 < CACHE_DURATION
-			) {
-				modsStore.set(cached.mods);
+			try {
+				isLoading = true;
+				const freshMods = await fetchModDirectories();
+				modsStore.set(freshMods);
+			} finally {
 				isLoading = false;
-			} else {
-				try {
-					isLoading = true;
-					const freshMods = await fetchModDirectories();
-					modsStore.set(freshMods);
-				} finally {
-					isLoading = false;
-				}
 			}
 
 			try {
@@ -325,25 +317,8 @@
 			}
 		};
 
-		// Separate async function for background state
-		const initBackgroundState = async () => {
-			try {
-				const isBackgroundAnimationEnabled: boolean = await invoke(
-					"get_background_state",
-				);
-				backgroundEnabled.set(isBackgroundAnimationEnabled);
-			} catch (error) {
-				console.error("Failed to get background status:", error);
-				addMessage(
-					"Error fetching background animation status",
-					"error",
-				);
-			}
-		};
-
 		// Call async functions without awaiting them directly in onMount
 		initialize();
-		initBackgroundState();
 
 		// Return synchronous cleanup function
 		return () => {
@@ -432,14 +407,14 @@
 								"get_latest_steamodded_release",
 							);
 							await installModFromURL(mod, latestReleaseURL);
-						} else if (mod.downloadURL) {
+						} else if (mod.download_url) {
 							const folderName =
-								mod.folderName || mod.title.replace(/\s+/g, "");
+								mod.folder_name || mod.title.replace(/\s+/g, "");
 							const installedPath = await invoke<string>(
 								"install_mod",
 								{
-									url: mod.downloadURL,
-									folderName,
+									url: mod.download_url,
+									folderName: folderName,
 								},
 							);
 
@@ -530,11 +505,11 @@
 
 			// Use mod title as fallback if folder_name is empty
 			const folderName =
-				folder_name || mod.folderName || mod.title.replace(/\s+/g, "");
+				folder_name || mod.folder_name || mod.title.replace(/\s+/g, "");
 
 			const installedPath = await invoke<string>("install_mod", {
 				url,
-				folderName,
+				folderName: folderName,
 			});
 
 			await invoke("add_installed_mod", {
@@ -556,7 +531,7 @@
 	}
 
 	const installMod = async (mod: Mod) => {
-		if (!mod?.title || !mod?.downloadURL) return;
+		if (!mod?.title || !mod?.download_url) return;
 
 		// Define the actual download function that will be stored and executed later if needed
 		const performDownload = async () => {
@@ -572,8 +547,8 @@
 				if (mod.requires_talisman) dependencies.push("Talisman");
 
 				const installedPath = await invoke<string>("install_mod", {
-					url: mod.downloadURL,
-					folderName: mod.folderName || mod.title.replace(/\s+/g, ""),
+					url: mod.download_url,
+					folderName: mod.folder_name || mod.title.replace(/\s+/g, ""),
 				});
 
 				await invoke("add_installed_mod", {
@@ -651,141 +626,28 @@
 		}
 	};
 
-	interface ModMeta {
-		title: string;
-		"requires-steamodded": boolean;
-		"requires-talisman": boolean;
-		categories: string[];
-		author: string;
-		repo: string;
-		downloadURL?: string;
-		folderName?: string;
-		version?: string;
-	}
-
-	const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes
-	// const CACHE_DURATION = 5 * 1000; // 5 seconds
-
-	async function saveToCache(mods: Mod[]) {
-		await invoke("save_mods_cache", { mods });
-	}
-
-	async function getFromCache(): Promise<{
-		mods: Mod[];
-		timestamp: number;
-	} | null> {
-		try {
-			const cached = await invoke<[Mod[], number] | null>(
-				"load_mods_cache",
-			);
-			if (!cached) return null;
-			const [mods, timestamp] = cached;
-			return { mods, timestamp };
-		} catch (error) {
-			console.error("Error loading cache:", error);
-			return null;
-		}
-	}
-
 	async function fetchModDirectories(): Promise<Mod[]> {
 		try {
-			isLoading = true;
-			const repoPath = await cloneOrUpdateRepo();
-			if (!repoPath) return [];
+			const lastFetched = await invoke<number>("get_last_fetched");
+			if (Date.now() - lastFetched > 3600 * 1000) {
+				await invoke("init_index");
+				await invoke("update_last_fetched");
+			}
 
-			const modDirs = await invoke<string[]>("list_directories", {
-				path: `${repoPath}/mods`,
+			const mods = (await invoke<Array<Mod>>("get_mod_list")).map((m) => {
+				m.categories = m
+					.categories
+					.map(cat => categoryMap[cat])
+					.filter(cat => !!cat);
+				return m;
 			});
 
-			const mods = (
-				await Promise.all(
-					modDirs.map(async (dirName) => {
-						try {
-							const [meta, description] = await Promise.all([
-								invoke<ModMeta>("read_json_file", {
-									path: `${repoPath}/mods/${dirName}/meta.json`,
-								}),
-								invoke<string>("read_text_file", {
-									path: `${repoPath}/mods/${dirName}/description.md`,
-								}),
-							]);
-
-							const imageData: string | undefined =
-								await invoke<string>("get_mod_thumbnail", {
-									modPath: dirName,
-								});
-
-							// Log category mapping for debugging
-							// Ensure categories are properly mapped
-							const mappedCategories = meta.categories
-								.map((cat) => {
-									return categoryMap[cat] ?? null;
-								})
-								.filter((cat): cat is Category => cat !== null);
-
-							return {
-								title: meta.title,
-								description,
-								image: imageData || "images/cover.jpg",
-								colors: getRandomColorPair(),
-								categories: mappedCategories,
-								requires_steamodded:
-									meta["requires-steamodded"],
-								requires_talisman: meta["requires-talisman"],
-								publisher: meta.author,
-								repo: meta.repo,
-								downloadURL: meta.downloadURL || "",
-								folderName: meta.folderName,
-								version: meta.version,
-								installed: false,
-								last_updated: meta["last-updated"],
-							} as Mod;
-						} catch (error) {
-							console.error(
-								`Failed to process mod ${dirName}:`,
-								error,
-							);
-							return null;
-						}
-					}),
-				)
-			).filter((mod): mod is Mod => mod !== null);
-
-			await saveToCache(mods);
 			return mods;
 		} catch (error) {
 			console.error("Failed to fetch mods:", error);
 			return [];
 		} finally {
 			isLoading = false;
-		}
-	}
-
-	async function cloneOrUpdateRepo() {
-		try {
-			const repoPath = await invoke<string>("get_repo_path");
-			const exists = await invoke<boolean>("path_exists", {
-				path: repoPath,
-			});
-			if (!exists) {
-				await invoke("clone_repo", {
-					url: "https://github.com/skyline69/balatro-mod-index.git",
-					path: repoPath,
-				});
-			} else {
-				const lastFetched = await invoke<number>("get_last_fetched");
-				if (Date.now() - lastFetched > 3600 * 1000) {
-					// 1 hour
-					await invoke("pull_repo", {
-						path: repoPath,
-					});
-					await invoke("update_last_fetched");
-				}
-			}
-			return repoPath;
-		} catch (error) {
-			console.error("Repo management failed:", error);
-			return null;
 		}
 	}
 
@@ -800,20 +662,6 @@
 		{ name: "Technical", icon: Spade },
 		{ name: "Resource Packs", icon: FolderHeart },
 		{ name: "API", icon: Gamepad2 },
-	];
-
-	const colorPairs = [
-		{ color1: "#4f6367", color2: "#425556" },
-		{ color1: "#AA778D", color2: "#906577" },
-		{ color1: "#A2615E", color2: "#89534F" },
-		{ color1: "#A48447", color2: "#8B703C" },
-		{ color1: "#4F7869", color2: "#436659" },
-		{ color1: "#728DBF", color2: "#6177A3" },
-		{ color1: "#5D5E8F", color2: "#4F4F78" },
-		{ color1: "#796E9E", color2: "#655D86" },
-		{ color1: "#64825D", color2: "#556E4E" },
-		{ color1: "#86A367", color2: "#728A57" },
-		{ color1: "#748C8A", color2: "#627775" },
 	];
 
 	const categoryMap: Record<string, Category> = {
@@ -834,10 +682,6 @@
 		API: Category.API,
 		api: Category.API,
 	};
-
-	function getRandomColorPair() {
-		return colorPairs[Math.floor(Math.random() * colorPairs.length)];
-	}
 
 	function handleModClick(mod: Mod) {
 		currentModView.set(mod);
@@ -955,8 +799,32 @@
 			if ($currentCategory === "Installed Mods") {
 				updateEnabledDisabledLists();
 			}
+
 		}
 	}
+
+	 $: fetchThumbnails = async () => {
+		const offset = ($currentPage - 1) * $itemsPerPage;
+		await invoke("fetch_thumbnails", { offset, count: $itemsPerPage });
+
+		const mods = (await invoke<Array<Mod>>("get_mod_list"))
+			.map((m) => {
+				m.categories = m
+					.categories
+					.map(cat => categoryMap[cat])
+					.filter(cat => !!cat);
+				return m;
+			});
+
+		const next = offset + $itemsPerPage;
+		for (let n = offset; n < next; n++) {
+			mods[n].image ||= "images/cover.jpg";
+		}
+
+		modsStore.set(mods);
+		await invoke("update_last_fetched");
+	}
+	$: {if (!isLoading) fetchThumbnails(); }
 
 	$: totalPages = Math.ceil(sortedAndFilteredMods.length / $itemsPerPage);
 	$: paginatedMods = sortedAndFilteredMods.slice(

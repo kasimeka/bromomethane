@@ -113,7 +113,7 @@
 			// Create a simplified version of the catalog mod for installation
 			const catalogMod = {
 				title: mod.catalog_match.title,
-				downloadURL: mod.catalog_match.download_url,
+				download_url: mod.catalog_match.download_url,
 				version: mod.catalog_match.version || "",
 				requires_steamodded: false,
 				requires_talisman: false,
@@ -144,9 +144,9 @@
 			try {
 				// Install the mod
 				const installedPath: string = await invoke("install_mod", {
-					url: catalogMod.downloadURL,
+					url: catalogMod.download_url,
 					folderName:
-						fullCatalogMod?.folderName ||
+						fullCatalogMod?.folder_name ||
 						catalogMod.title.replace(/\s+/g, ""),
 				});
 

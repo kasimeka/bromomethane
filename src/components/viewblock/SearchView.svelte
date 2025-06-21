@@ -117,9 +117,9 @@
 					dependencies.push("Talisman");
 
 				const installedPath = await invoke<string>("install_mod", {
-					url: modToInstall.downloadURL,
+					url: modToInstall.download_url,
 					folderName:
-						modToInstall.folderName ||
+						modToInstall.folder_name ||
 						modToInstall.title.replace(/\s+/g, ""),
 				});
 

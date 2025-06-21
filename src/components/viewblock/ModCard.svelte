@@ -155,7 +155,7 @@
 		}
 	}
 
-	async function installModFromURL(url: string, folder_name: string = "") {
+	async function installModFromURL(url: string, folderName: string = "") {
 		try {
 			loadingStates.update((s) => ({ ...s, [mod.title]: true }));
 
@@ -214,6 +214,7 @@
 		.color2};"
 >
 	<div class="mod-image">
+		{#if mod.image}
 		<img
 			src={mod.image}
 			alt={mod.title}
@@ -221,6 +222,9 @@
 			loading="lazy"
 			decoding="async"
 		/>
+		{:else}
+		<div style="width: 100%; height: 100%; opacity: 0;"></div>
+		{/if}
 
 		<div class="tags">
 			<!-- <span class="tag updated"> -->

@@ -34,7 +34,7 @@ pub fn init_logger() -> Result<(), AppError> {
     // Open log file
     let file = fs::OpenOptions::new()
         .create(true)
-        .append(true)  // removed .write(true)
+        .append(true) // removed .write(true)
         .open(&log_file)
         .map_err(|e| AppError::FileWrite {
             path: log_file.clone(),
@@ -44,22 +44,7 @@ pub fn init_logger() -> Result<(), AppError> {
     // Create a combined writer for both file and stdout
     let file_writer = CustomWriter { file };
 
-    // Initialize env_logger with our custom writer
-    env_logger::Builder::new()
-        .format(|buf, record| {
-            writeln!(
-                buf,
-                "[{}] {} [{}] {}",
-                Local::now().format("%Y-%m-%d %H:%M:%S"),
-                record.level(),
-                record.target(),
-                record.args()
-            )
-        })
-        .filter(None, LevelFilter::Debug) // Capture all logs
-        .write_style(env_logger::WriteStyle::Never)
-        .target(env_logger::Target::Pipe(Box::new(file_writer)))
-        .init();
+    env_logger::Builder::from_env(env_logger::Env::new().default_filter_or("info")).init();
 
     // Log some initial messages to test
     log::info!("Logging system initialized at {}", Local::now());
@@ -136,4 +121,3 @@ fn cleanup_old_logs(log_dir: &PathBuf) -> Result<(), AppError> {
 
     Ok(())
 }
-
