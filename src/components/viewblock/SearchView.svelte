@@ -244,8 +244,10 @@
 				});
 
 				mods.forEach((mod, idx) => {
-					const searchText =
-						`${mod.title} ${mod.publisher}`.toLowerCase();
+					const searchText = `${mod.title} ${mod.publisher} ${mod.description}`
+						.toLowerCase()
+						.match(/[\sa-z0-9]/g)
+						.join('');
 					searchIndex.add(idx, searchText);
 				});
 			}
@@ -291,17 +293,13 @@
 				type="text"
 				bind:value={searchQuery}
 				oninput={handleInput}
-				placeholder="Search mods... (Author or Title)"
+				placeholder="Search mods... (Author, Title or Description)"
 				class="search-input"
 			/>
-			<!-- <button type="submit" class="search-button">
-				<Search size={20} />
-			</button> -->
 		</form>
 
 		{#if showSpinner}
-			<!-- svelte-ignore element_invalid_self_closing_tag -->
-			<div transition:fade={{ duration: 100 }} class="search-spinner" />
+			<div transition:fade={{ duration: 100 }} class="search-spinner"></div>
 		{/if}
 	</div>
 
