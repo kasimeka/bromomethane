@@ -7,4 +7,15 @@ mkdir -p "${OUTDIR}"
 
 docker buildx build -f "${WORKDIR}"/Dockerfile . --load -t balatro-mod-manager:temp
 
-docker run --rm -v "${OUTDIR}:/output" balatro-mod-manager:temp bash -c 'cp /app/bundles/* /output/'
+docker run --rm -v "${OUTDIR}:/output" balatro-mod-manager:trash bash -c 'cp /app/bundles/* /output/'
+
+DEB="$(ls -1t "$OUTDIR/"*.deb | head -n1)"
+
+VERSION="$(jq -r '.version' package.json)"
+SHA512SUM="$(sha512sum "$DEB" | cut -d' ' -f1)"
+
+sed \
+  -e 's/@version@/'"$VERSION"'/g' \
+  -e 's/@sha512sum@/'"$SHA512SUM"'/g' \
+  .hack/linux/pkgbuild/PKGBUILD.tmpl \
+  > .hack/linux/pkgbuild/PKGBUILD

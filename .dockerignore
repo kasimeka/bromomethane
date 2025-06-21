@@ -34,5 +34,6 @@ default.nix
 /result
 /.hack/pnpm-lock.yaml
 /.hack/linux/bundle.sh
+/.hack/linux/pkgbuild
 /scripts/
 /version_updater/
