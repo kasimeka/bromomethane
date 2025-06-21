@@ -55,8 +55,7 @@ pub async fn clone_repository(url: &str, path: &str) -> Result<(), String> {
 
     // Download the repository as a zip file from the chosen branch
     let mut download_url = format!(
-        "https://github.com/{}/{}/archive/refs/heads/{}.zip",
-        owner, repo, branch
+        "https://github.com/{owner}/{repo}/archive/refs/heads/{branch}.zip"
     );
 
     let mut response = reqwest::get(&download_url).await;
@@ -69,41 +68,40 @@ pub async fn clone_repository(url: &str, path: &str) -> Result<(), String> {
     {
         branch = "master"; // Update the branch variable
         download_url = format!(
-            "https://github.com/{}/{}/archive/refs/heads/{}.zip",
-            owner, repo, branch
+            "https://github.com/{owner}/{repo}/archive/refs/heads/{branch}.zip"
         );
         response = reqwest::get(&download_url).await;
     }
 
     // If still failing, return the error
-    let response = response.map_err(|e| format!("Failed to download repository: {}", e))?;
+    let response = response.map_err(|e| format!("Failed to download repository: {e}"))?;
 
     let bytes = response
         .bytes()
         .await
-        .map_err(|e| format!("Failed to read response: {}", e))?;
+        .map_err(|e| format!("Failed to read response: {e}"))?;
 
     // Create target directory
     let target_path = PathBuf::from(path);
     std::fs::create_dir_all(&target_path)
-        .map_err(|e| format!("Failed to create directory: {}", e))?;
+        .map_err(|e| format!("Failed to create directory: {e}"))?;
 
     // Save zip file to temporary location
     let temp_zip = target_path.join("temp.zip");
-    let mut file = File::create(&temp_zip).map_err(|e| format!("Failed to create file: {}", e))?;
+    let mut file = File::create(&temp_zip).map_err(|e| format!("Failed to create file: {e}"))?;
     file.write_all(&bytes)
-        .map_err(|e| format!("Failed to write file: {}", e))?;
+        .map_err(|e| format!("Failed to write file: {e}"))?;
 
     // Extract zip file
     let file =
-        std::fs::File::open(&temp_zip).map_err(|e| format!("Failed to open zip file: {}", e))?;
+        std::fs::File::open(&temp_zip).map_err(|e| format!("Failed to open zip file: {e}"))?;
     let mut archive =
-        zip::ZipArchive::new(file).map_err(|e| format!("Failed to parse zip file: {}", e))?;
+        zip::ZipArchive::new(file).map_err(|e| format!("Failed to parse zip file: {e}"))?;
 
     for i in 0..archive.len() {
         let mut file = archive
             .by_index(i)
-            .map_err(|e| format!("Failed to access file in zip: {}", e))?;
+            .map_err(|e| format!("Failed to access file in zip: {e}"))?;
 
         // Get the path removing the repository name folder
         let name = file.name();
@@ -122,21 +120,21 @@ pub async fn clone_repository(url: &str, path: &str) -> Result<(), String> {
         // Create directories
         if file.is_dir() {
             std::fs::create_dir_all(&target)
-                .map_err(|e| format!("Failed to create directory: {}", e))?;
+                .map_err(|e| format!("Failed to create directory: {e}"))?;
             continue;
         }
 
         // Create parent directories for files
         if let Some(parent) = target.parent() {
             std::fs::create_dir_all(parent)
-                .map_err(|e| format!("Failed to create directory: {}", e))?;
+                .map_err(|e| format!("Failed to create directory: {e}"))?;
         }
 
         // Extract files
         let mut outfile =
-            File::create(&target).map_err(|e| format!("Failed to create file: {}", e))?;
+            File::create(&target).map_err(|e| format!("Failed to create file: {e}"))?;
         std::io::copy(&mut file, &mut outfile)
-            .map_err(|e| format!("Failed to write file: {}", e))?;
+            .map_err(|e| format!("Failed to write file: {e}"))?;
     }
 
     // Clean up temp zip file
@@ -144,9 +142,9 @@ pub async fn clone_repository(url: &str, path: &str) -> Result<(), String> {
 
     // Create a simple .git_info file to store repo URL and branch (for pulls)
     let git_info = target_path.join(".git_info");
-    let info_content = format!("{}\nbranch={}", url, branch);
+    let info_content = format!("{url}\nbranch={branch}");
     std::fs::write(git_info, info_content)
-        .map_err(|e| format!("Failed to write repository info: {}", e))?;
+        .map_err(|e| format!("Failed to write repository info: {e}"))?;
 
     Ok(())
 }
@@ -164,26 +162,25 @@ pub async fn pull_repository(path: &str) -> Result<(), String> {
     // Check if .git_info exists
     if !git_info_path.exists() {
         return Err(format!(
-            "Directory at '{}' is not a valid repository. Please clone it first.",
-            path
+            "Directory at '{path}' is not a valid repository. Please clone it first."
         ));
     }
 
     // Read the git info content
     let git_info_content = std::fs::read_to_string(&git_info_path)
-        .map_err(|e| format!("Failed to read repository info: {}", e))?;
+        .map_err(|e| format!("Failed to read repository info: {e}"))?;
 
     // Parse the content - first line is the URL
     let lines: Vec<&str> = git_info_content.lines().collect();
     let url = lines[0].trim().to_string();
 
-    log::info!("URL from git_info: {}", url);
+    log::info!("URL from git_info: {url}");
 
     // Delete everything except .git_info
     for entry in
-        std::fs::read_dir(&repo_path).map_err(|e| format!("Failed to read directory: {}", e))?
+        std::fs::read_dir(&repo_path).map_err(|e| format!("Failed to read directory: {e}"))?
     {
-        let entry = entry.map_err(|e| format!("Failed to read entry: {}", e))?;
+        let entry = entry.map_err(|e| format!("Failed to read entry: {e}"))?;
         let entry_path = entry.path();
 
         // Skip .git_info file
@@ -194,14 +191,14 @@ pub async fn pull_repository(path: &str) -> Result<(), String> {
         // Remove file or directory
         if entry
             .file_type()
-            .map_err(|e| format!("Failed to get file type: {}", e))?
+            .map_err(|e| format!("Failed to get file type: {e}"))?
             .is_dir()
         {
             std::fs::remove_dir_all(&entry_path)
-                .map_err(|e| format!("Failed to remove directory: {}", e))?;
+                .map_err(|e| format!("Failed to remove directory: {e}"))?;
         } else {
             std::fs::remove_file(&entry_path)
-                .map_err(|e| format!("Failed to remove file: {}", e))?;
+                .map_err(|e| format!("Failed to remove file: {e}"))?;
         }
     }
 
@@ -231,15 +228,14 @@ pub async fn clone_repository_with_branch(
 
     // Download the repository as a zip file from the specified branch
     let download_url = format!(
-        "https://github.com/{}/{}/archive/refs/heads/{}.zip",
-        owner, repo, branch
+        "https://github.com/{owner}/{repo}/archive/refs/heads/{branch}.zip"
     );
 
-    log::info!("Downloading from URL: {}", download_url); // Debug print
+    log::info!("Downloading from URL: {download_url}"); // Debug print
 
     let response = reqwest::get(&download_url)
         .await
-        .map_err(|e| format!("Failed to download repository from {}: {}", download_url, e))?;
+        .map_err(|e| format!("Failed to download repository from {download_url}: {e}"))?;
 
     if !response.status().is_success() {
         return Err(format!(
@@ -252,28 +248,28 @@ pub async fn clone_repository_with_branch(
     let bytes = response
         .bytes()
         .await
-        .map_err(|e| format!("Failed to read response: {}", e))?;
+        .map_err(|e| format!("Failed to read response: {e}"))?;
 
     log::info!("Downloaded {} bytes", bytes.len()); // Debug print
 
     // Create target directory
     let target_path = PathBuf::from(path);
     std::fs::create_dir_all(&target_path)
-        .map_err(|e| format!("Failed to create directory: {}", e))?;
+        .map_err(|e| format!("Failed to create directory: {e}"))?;
 
     // Save zip file to temporary location
     let temp_zip = target_path.join("temp.zip");
-    let mut file = File::create(&temp_zip).map_err(|e| format!("Failed to create file: {}", e))?;
+    let mut file = File::create(&temp_zip).map_err(|e| format!("Failed to create file: {e}"))?;
     file.write_all(&bytes)
-        .map_err(|e| format!("Failed to write file: {}", e))?;
+        .map_err(|e| format!("Failed to write file: {e}"))?;
 
     log::info!("Saved zip file to {}", temp_zip.display()); // Debug print
 
     // Extract zip file
     let file =
-        std::fs::File::open(&temp_zip).map_err(|e| format!("Failed to open zip file: {}", e))?;
+        std::fs::File::open(&temp_zip).map_err(|e| format!("Failed to open zip file: {e}"))?;
     let mut archive =
-        zip::ZipArchive::new(file).map_err(|e| format!("Failed to parse zip file: {}. This might mean the downloaded file is not a valid zip archive.", e))?;
+        zip::ZipArchive::new(file).map_err(|e| format!("Failed to parse zip file: {e}. This might mean the downloaded file is not a valid zip archive."))?;
 
     log::info!(
         "Successfully opened zip archive with {} files",
@@ -284,7 +280,7 @@ pub async fn clone_repository_with_branch(
     for i in 0..archive.len() {
         let mut file = archive
             .by_index(i)
-            .map_err(|e| format!("Failed to access file in zip: {}", e))?;
+            .map_err(|e| format!("Failed to access file in zip: {e}"))?;
 
         // Get the path removing the repository name folder
         let name = file.name();
@@ -303,21 +299,21 @@ pub async fn clone_repository_with_branch(
         // Create directories
         if file.is_dir() {
             std::fs::create_dir_all(&target)
-                .map_err(|e| format!("Failed to create directory: {}", e))?;
+                .map_err(|e| format!("Failed to create directory: {e}"))?;
             continue;
         }
 
         // Create parent directories for files
         if let Some(parent) = target.parent() {
             std::fs::create_dir_all(parent)
-                .map_err(|e| format!("Failed to create directory: {}", e))?;
+                .map_err(|e| format!("Failed to create directory: {e}"))?;
         }
 
         // Extract files
         let mut outfile =
-            File::create(&target).map_err(|e| format!("Failed to create file: {}", e))?;
+            File::create(&target).map_err(|e| format!("Failed to create file: {e}"))?;
         std::io::copy(&mut file, &mut outfile)
-            .map_err(|e| format!("Failed to write file: {}", e))?;
+            .map_err(|e| format!("Failed to write file: {e}"))?;
     }
 
     // Clean up temp zip file
@@ -325,11 +321,11 @@ pub async fn clone_repository_with_branch(
 
     // Create a simple .git_info file to store repo URL and branch (for pulls)
     let git_info = target_path.join(".git_info");
-    let info_content = format!("{}\nbranch={}", url, branch);
+    let info_content = format!("{url}\nbranch={branch}");
     std::fs::write(git_info, info_content)
-        .map_err(|e| format!("Failed to write repository info: {}", e))?;
+        .map_err(|e| format!("Failed to write repository info: {e}"))?;
 
-    log::info!("Successfully cloned repository with branch: {}", branch); // Debug print
+    log::info!("Successfully cloned repository with branch: {branch}"); // Debug print
 
     Ok(())
 }
