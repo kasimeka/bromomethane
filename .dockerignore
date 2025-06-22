@@ -11,9 +11,10 @@ vite.config.ts.timestamp-*
 /scripts/build_for_release.sh
 /.hack/linux/bundles
 
-/src-tauri/**/target
-/src-tauri/**/gen/schemas
-/src-tauri/**/storage.db
+**/target
+**/gen/schemas
+**/storage.db
+**/target
 
 .git
 .github
