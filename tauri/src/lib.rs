@@ -409,11 +409,6 @@ fn open_directory(path: String) -> Result<(), String> {
     }
 }
 
-// #[tauri::command]
-// async fn load_mods_cache() -> Result<Option<(Vec<cache::Mod>, u64)>, String> {
-//     map_error(cache::load_cache())
-// }
-
 #[tauri::command]
 async fn get_lovely_console_status(state: tauri::State<'_, AppState<'_>>) -> Result<bool, String> {
     let db = state
@@ -751,9 +746,7 @@ async fn process_dropped_file(
         }
     }
 
-    let has_lua_files = check_for_lua_files(&mod_dir)?;
-
-    if !has_lua_files {
+    if !has_lua_files(&mod_dir) {
         // Clean up invalid mod directory
         fs::remove_dir_all(&mod_dir)
             .map_err(|e| format!("Failed to remove invalid mod directory: {e}"))?;
@@ -769,7 +762,7 @@ async fn process_dropped_file(
 }
 
 // Helper function to check for .lua files
-fn check_for_lua_files(dir: &PathBuf) -> Result<bool, String> {
+fn has_lua_files(dir: &PathBuf) -> bool {
     // Walk the directory recursively to find any .lua files
     for entry in WalkDir::new(dir)
         .into_iter()
@@ -778,13 +771,13 @@ fn check_for_lua_files(dir: &PathBuf) -> Result<bool, String> {
         if entry.file_type().is_file() {
             if let Some(extension) = entry.path().extension() {
                 if extension == "lua" {
-                    return Ok(true);
+                    return true;
                 }
             }
         }
     }
 
-    Ok(false)
+    false
 }
 
 /// Process a mod archive from raw binary data (alternative approach if needed)
@@ -1212,7 +1205,6 @@ async fn launch_balatro(state: tauri::State<'_, AppState<'_>>) -> Result<(), Str
             db.is_lovely_console_enabled()?,
         )
     };
-
     let path = PathBuf::from(path_str);
 
     #[cfg(target_os = "macos")]
