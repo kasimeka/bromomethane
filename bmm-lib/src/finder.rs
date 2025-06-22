@@ -10,9 +10,9 @@ use std::path::PathBuf;
 #[cfg(target_os = "windows")]
 use sysinfo::System;
 #[cfg(target_os = "windows")]
-use winreg::enums::*;
-#[cfg(target_os = "windows")]
 use winreg::RegKey;
+#[cfg(target_os = "windows")]
+use winreg::enums::*;
 
 #[cfg(target_os = "windows")]
 fn read_path_from_registry() -> Result<String, std::io::Error> {
@@ -106,7 +106,7 @@ pub fn get_lovely_mods_dir(
                 dirs::home_dir().unwrap().join(".steam/steam/steamapps/")
             }
         };
-        log::debug!("Assuming steam wineprefix: `{}`", prefix.to_string_lossy());
+        log::info!("Assuming steam wineprefix: `{}`", prefix.to_string_lossy());
 
         prefix.join("compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/Mods")
     }
@@ -120,7 +120,8 @@ pub fn get_lovely_mods_dir(
 }
 
 #[cfg(target_os = "linux")]
-#[must_use] pub fn get_balatro_paths() -> Vec<PathBuf> {
+#[must_use]
+pub fn get_balatro_paths() -> Vec<PathBuf> {
     let mut paths: Vec<PathBuf> = vec![];
     match home::home_dir() {
         Some(path) => {
@@ -134,7 +135,8 @@ pub fn get_lovely_mods_dir(
     paths
 }
 
-#[must_use] pub fn is_steam_running() -> bool {
+#[must_use]
+pub fn is_steam_running() -> bool {
     #[cfg(target_os = "windows")]
     {
         let system = System::new_all();
@@ -183,7 +185,8 @@ pub fn get_lovely_mods_dir(
     }
 }
 
-#[must_use] pub fn get_installed_mods(installation_path: Option<&String>) -> Vec<String> {
+#[must_use]
+pub fn get_installed_mods(installation_path: Option<&String>) -> Vec<String> {
     let mut installed_mods_paths: Vec<PathBuf> = vec![];
     // let game_path = get_balatro_paths();
     // let game_name: PathBuf = game_path
@@ -214,7 +217,8 @@ pub fn get_lovely_mods_dir(
         .collect()
 }
 
-#[must_use] pub fn is_balatro_running() -> bool {
+#[must_use]
+pub fn is_balatro_running() -> bool {
     #[cfg(target_os = "windows")]
     {
         let system = System::new_all();

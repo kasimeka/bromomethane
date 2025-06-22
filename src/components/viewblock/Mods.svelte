@@ -2,7 +2,6 @@
 	import {
 		Download,
 		Flame,
-		//Clock,
 		Star,
 		Spade,
 		Gamepad2,
