@@ -356,14 +356,6 @@
 		object-fit: cover;
 	}
 
-	.tags {
-		position: absolute;
-		top: 7.2rem;
-		right: 0.35rem;
-		display: flex;
-		gap: 0.5rem;
-	}
-
 	.mod-info {
 		flex: 1;
 		padding: 0.5rem;
