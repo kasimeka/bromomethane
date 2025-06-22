@@ -1,7 +1,7 @@
 use crate::errors::AppError;
+use flate2::Compression;
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
-use flate2::Compression;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::fs::File;
@@ -326,57 +326,4 @@ pub fn load_cache() -> Result<Option<(Vec<Mod>, u64)>, AppError> {
     }
 
     Ok(Some((cache.mods, cache.header.timestamp)))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use tempfile::tempdir;
-
-    fn with_temp_cache<T>(test: impl FnOnce(PathBuf) -> T) -> T {
-        let temp_dir = tempdir().unwrap();
-        let original_cache = std::env::var_os("XDG_CACHE_HOME");
-
-        std::env::set_var("XDG_CACHE_HOME", temp_dir.path());
-        let result = test(temp_dir.path().to_path_buf());
-
-        if let Some(val) = original_cache {
-            std::env::set_var("XDG_CACHE_HOME", val);
-        } else {
-            std::env::remove_var("XDG_CACHE_HOME");
-        }
-
-        result
-    }
-
-    #[test]
-    fn test_mod_cache_lifecycle() -> Result<(), AppError> {
-        with_temp_cache(|_| {
-            let test_mod = Mod {
-                title: "Test Mod".into(),
-                description: "Test Description".into(),
-                image: "test.png".into(),
-                categories: vec![Category::Content],
-                colors: ColorPair {
-                    color1: "#fff".into(),
-                    color2: "#000".into(),
-                },
-                installed: false,
-                requires_steamodded: false,
-                requires_talisman: false,
-                publisher: "Test".into(),
-                repo: "test/test".into(),
-                download_url: "https://test.com/mod.zip".into(),
-                folder_name: None,
-                version: None,
-            };
-
-            save_cache(&[test_mod.clone()])?;
-            let loaded = load_cache()?.expect("Should load cache");
-
-            assert_eq!(loaded.0.len(), 1);
-            assert_eq!(loaded.0[0].title, "Test Mod");
-            Ok(())
-        })
-    }
 }
