@@ -25,15 +25,15 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY . .
 RUN \
-    --mount=type=cache,target=/app/src/src-tauri/target/ \
-    --mount=type=cache,target=/app/src/src-tauri/bmm-lib/target/ \
+    --mount=type=cache,target=/app/src/tauri/target/ \
+    --mount=type=cache,target=/app/src/bmm-lib/target/ \
     --mount=type=cache,target=/root/.cargo/registry/cache/git/db \
     --mount=type=cache,target=/root/.cargo/registry/cache/registry/ \
   pnpm tauri build --target x86_64-unknown-linux-gnu --verbose && \
-  mkdir /app/bundles && cp \
-    src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb \
-    src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/rpm/*.rpm \
-    src-tauri/target/x86_64-unknown-linux-gnu/release/bundle/appimage/*.AppImage \
+  mkdir /app/bundles && mv \
+    tauri/target/x86_64-unknown-linux-gnu/release/bundle/deb/*.deb \
+    tauri/target/x86_64-unknown-linux-gnu/release/bundle/rpm/*.rpm \
+    tauri/target/x86_64-unknown-linux-gnu/release/bundle/appimage/*.AppImage \
     /app/bundles
 
 
