@@ -24,16 +24,19 @@ pub async fn ensure_version_dll_exists(game_path: &PathBuf) -> Result<Option<Pat
                         || errno == /* (13) - Permission denied */ libc::EACCES
                     {
                         log::error!(
-                                "Failed to create file '{}', path not writable ({}). This error will be ignored and you have to manually install lovely instead.",
-                                dll_path.display(),
-                                errno,
-                            );
+                            "Failed to create file '{}', path not writable ({}). This error will be ignored and you have to manually install lovely instead.",
+                            dll_path.display(),
+                            errno,
+                        );
                         return Ok(None);
                     }
                 }
                 return Err(AppError::FileWrite {
                     path: dll_path.clone(),
                     source: e.to_string(),
+                })
+                .inspect_err(|e| {
+                    log::error!("Failed to create file '{}': {}", dll_path.display(), e);
                 });
             }
         };

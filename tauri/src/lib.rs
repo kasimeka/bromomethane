@@ -1198,6 +1198,7 @@ async fn refresh_mods_folder(state: tauri::State<'_, AppState<'_>>) -> Result<()
 }
 
 #[tauri::command]
+#[allow(clippy::too_many_lines)]
 async fn launch_balatro(state: tauri::State<'_, AppState<'_>>) -> Result<(), String> {
     let (path_str, lovely_console_enabled) = {
         let db = state
@@ -1293,65 +1294,13 @@ async fn launch_balatro(state: tauri::State<'_, AppState<'_>>) -> Result<(), Str
 
     #[cfg(target_os = "linux")]
     {
-        // Ensure version.dll exists in the game directory
-        let dll_path = path.join("version.dll");
-        if !dll_path.exists() {
-            lovely::ensure_version_dll_exists(&path)
-                .await
-                .inspect_err(|_| log::error!("Failed to install `lovely`"))?;
-        }
-
-        // Try to launch through Steam first (preferred method for Proton)
-        let app_id = "2379780"; // Balatro's Steam AppID
-
-        // Try with steam URL protocol first
-        let url_handler = Command::new("xdg-mime")
-            .arg("query")
-            .arg("default")
-            .arg("x-scheme-handler/steam")
-            .output()
-            .map_err(|e| format!("Failed to query `steam://` handler: {e}"))
-            .and_then(|output| {
-                let output = String::from_utf8_lossy(&output.stdout);
-                if output.trim().is_empty() {
-                    return Err("No default `steam://` handler found".to_string());
-                }
-                if output.trim() != "steam.desktop" {
-                    log::warn!(
-                        "The system's default `steam://` handler is {output} instead of steam"
-                    );
-                }
-                Ok(())
-            });
-
-        if url_handler.is_ok() {
-            let _ = Command::new("xdg-open")
-                .arg(format!("steam://run/{app_id}"))
-                .spawn();
-            log::debug!("Launched Balatro through Steam URL protocol");
-            return Ok(());
-        }
-
-        // Try with Steam executable directly as fallback
-        let steam_result = which::which("steam").map(|steam_path| {
-            let mut command = Command::new(steam_path);
-            if lovely_console_enabled {
-                command.args(["-applaunch", app_id]);
-            } else {
-                // Pass console disable flag through Steam launch options
-                command.args(["-applaunch", app_id, "--", "--disable-console"]);
-            }
-            command.spawn()
-        });
-
-        if let Ok(Ok(_)) = steam_result {
-            log::debug!("Launched Balatro through Steam executable");
-            return Ok(());
-        }
-
-        // Last resort: try direct launch with WINEDLLOVERRIDES
         let exe_path = find_executable_in_directory(&path)
-            .ok_or_else(|| format!("No executable found in {}", path.display()))?;
+            .ok_or_else(|| format!("No executable found in {}", path.display()))
+            .inspect_err(|e| log::error!("{e}"))?;
+
+        if !path.join("version.dll").exists() {
+            lovely::ensure_version_dll_exists(&path).await?;
+        }
 
         let mut command = Command::new(&exe_path);
         command
@@ -1362,6 +1311,7 @@ async fn launch_balatro(state: tauri::State<'_, AppState<'_>>) -> Result<(), Str
             command.arg("--disable-console");
         }
 
+        log::debug!("attempting to launch {}", exe_path.display());
         command
             .spawn()
             .map_err(|e| format!("Failed to launch {}: {}", exe_path.display(), e))?;
