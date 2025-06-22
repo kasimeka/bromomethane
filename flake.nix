@@ -107,7 +107,7 @@
           packages = with pkgs;
             lib.optionals stdenv.isLinux [xdg-utils]
             ++ [
-              go-task
+              just
               rust-analyzer
               clippy
               rustfmt
