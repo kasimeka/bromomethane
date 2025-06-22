@@ -37,7 +37,6 @@
           version = cargo-toml.package.version;
 
           mainProgram =
-            # fallback to null in order to crash if no main binary found
             (pkgs.lib.lists.findFirst (f: f.path == "src/main.rs") null cargo-toml.bin).name;
         in
           pkgs.rustPlatform.buildRustPackage {
@@ -45,13 +44,11 @@
             doCheck = false;
 
             buildAndTestSubdir = "tauri";
-            # cargoRoot = "tauri";
             cargoLock.lockFile = "${src}/Cargo.lock";
             cargoLock.outputHashes = {
               "fix-path-env-0.0.0" = "sha256-SHJc86sbK2fA48vkVjUpvC5FQoBOno3ylUV5J1b4dAk=";
             };
 
-            # using npm to fetch deps and bun to build, since nix doesn't have a bun fetcher
             pnpmDeps = pkgs.pnpm.fetchDeps {
               inherit pname version src;
               hash = "sha256-wMQkftXNiP0OqyHWtMawxKGUnKesI3nilvL0Pb5okok=";
