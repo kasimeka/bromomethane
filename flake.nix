@@ -23,7 +23,7 @@
         pkgs = nixpkgs.legacyPackages.${system};
 
         drv = let
-          cargo-toml = pkgs.lib.importTOML ./src-tauri/Cargo.toml;
+          cargo-toml = pkgs.lib.importTOML ./tauri/Cargo.toml;
 
           src = pkgs.lib.cleanSourceWith {
             name = "${pname}-${version}-clean-src";
@@ -44,9 +44,9 @@
             inherit src pname version;
             doCheck = false;
 
-            buildAndTestSubdir = "src-tauri";
-            cargoRoot = "src-tauri";
-            cargoLock.lockFile = "${src}/src-tauri/Cargo.lock";
+            buildAndTestSubdir = "tauri";
+            # cargoRoot = "tauri";
+            cargoLock.lockFile = "${src}/Cargo.lock";
             cargoLock.outputHashes = {
               "fix-path-env-0.0.0" = "sha256-SHJc86sbK2fA48vkVjUpvC5FQoBOno3ylUV5J1b4dAk=";
             };
@@ -54,7 +54,7 @@
             # using npm to fetch deps and bun to build, since nix doesn't have a bun fetcher
             pnpmDeps = pkgs.pnpm.fetchDeps {
               inherit pname version src;
-              hash = "sha256-aTivFB96eVBPWi7JZdFZa/NjEWHH5DR3BCLovBcYirA=";
+              hash = "sha256-wMQkftXNiP0OqyHWtMawxKGUnKesI3nilvL0Pb5okok=";
             };
 
             nativeBuildInputs = with pkgs; [

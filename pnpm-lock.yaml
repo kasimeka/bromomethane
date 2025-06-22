@@ -23,12 +23,6 @@ importers:
       '@tauri-apps/plugin-window-state':
         specifier: ~2.2.2
         version: 2.2.3
-      '@types/flexsearch':
-        specifier: ^0.7.42
-        version: 0.7.42
-      '@types/lodash':
-        specifier: 4.17.16
-        version: 4.17.16
       axios:
         specifier: ^1.9.0
         version: 1.10.0
@@ -51,6 +45,9 @@ importers:
       '@tauri-apps/cli':
         specifier: ^2.5.0
         version: 2.5.0
+      '@types/lodash':
+        specifier: 4.17.16
+        version: 4.17.16
       lucide-svelte:
         specifier: ^0.483.0
         version: 0.483.0(svelte@5.34.7)
@@ -478,10 +475,6 @@ packages:
 
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
-
-  '@types/flexsearch@0.7.42':
-    resolution: {integrity: sha512-FdKaw3dPgcCvqU9w8SGgqx8PrxFF2EKySRhEj1nc45HNe/2cBLff3pF52C67hzeUbNhq49t7XRIIibBd41vcIg==}
-    deprecated: This is a stub types definition. flexsearch provides its own type definitions, so you do not need this installed.
 
   '@types/lodash@4.17.16':
     resolution: {integrity: sha512-HX7Em5NYQAXKW+1T+FiuG27NGwzJfCX3s1GjOa7ujxZa52kjJLOr4FUxT+giF6Tgxv1e+/czV/iTtBw27WTU9g==}
@@ -1086,10 +1079,6 @@ snapshots:
   '@types/cookie@0.6.0': {}
 
   '@types/estree@1.0.8': {}
-
-  '@types/flexsearch@0.7.42':
-    dependencies:
-      flexsearch: 0.8.205
 
   '@types/lodash@4.17.16': {}
 
