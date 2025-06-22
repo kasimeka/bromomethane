@@ -206,12 +206,12 @@
 
 <div
 	class="mod-card"
+	class:no-image={!mod.image}
 	onclick={openModView}
 	onkeydown={(e) => e.key === "Enter" && openModView()}
 	role="button"
 	tabindex="0"
-	style="--orig-color1: {mod.colors.color1}; --orig-color2: {mod.colors
-		.color2};"
+	style="--orig-color1: {mod.colors.color1}; --orig-color2: {mod.colors.color2};"
 >
 	<div class="mod-image">
 		{#if mod.image}
@@ -223,15 +223,8 @@
 			decoding="async"
 		/>
 		{:else}
-		<div style="width: 100%; height: 100%; opacity: 0;"></div>
+		<div style="width: 100%; height: 100%;"></div>
 		{/if}
-
-		<div class="tags">
-			<!-- <span class="tag updated"> -->
-			<!-- 	<Clock size={13} /> -->
-			<!-- 	{mod.lastUpdated} -->
-			<!-- </span> -->
-		</div>
 	</div>
 
 	<div class="mod-info">
@@ -336,6 +329,11 @@
 		animation: stripe-slide-up 1.5s linear infinite;
 		scale: 1.05;
 	}
+
+	.mod-card.no-image {
+		animation: stripe-slide-up 1.5s linear infinite;
+	}
+
 
 	@keyframes stripe-slide-up {
 		0% {
