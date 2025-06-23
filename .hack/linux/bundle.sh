@@ -17,5 +17,5 @@ SHA512SUM="$(sha512sum "$DEB" | cut -d' ' -f1)"
 sed \
   -e 's/@version@/'"$VERSION"'/g' \
   -e 's/@sha512sum@/'"$SHA512SUM"'/g' \
-  .hack/linux/pkgbuild/PKGBUILD.tmpl \
-  > .hack/linux/pkgbuild/PKGBUILD
+  .hack/linux/pkgbuild/arch-install.sh.tmpl \
+  > .hack/linux/pkgbuild/arch-install.sh
