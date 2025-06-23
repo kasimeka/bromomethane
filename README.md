@@ -5,6 +5,8 @@ a fork of [the Balatro Mod Manager by Skyline](https://github.com/skyline69/bala
 
 join the [Balatro Mod Manager Discord](https://discord.gg/anxVxpfMzd) for discussions about this project, BMM or the Balatro Mod Index.
 
+![bromomethane window](./README.d/bromomethane-window.png)
+
 ## mod submission
 
 to add your mods to bromomethane or BMM, follow the instructions at [the Balatro Mod Index](https://github.com/skyline69/balatro-mod-index).
