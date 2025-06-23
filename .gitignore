@@ -9,8 +9,8 @@ node_modules
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 /scripts/build_for_release.sh
-/.hack/linux/bundles
-/.hack/linux/pkgbuild/PKGBUILD
+/scripts/linux/bundles
+/scripts/linux/pkgbuild/PKGBUILD
 result
 **/target
 **/gen/schemas

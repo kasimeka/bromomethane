@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -xe
 
-WORKDIR="$PWD/.hack/linux"
+WORKDIR="$PWD/scripts/linux"
 OUTDIR="${WORKDIR}/bundles/$(date --utc +%Y%m%d_%H%M%SZ)"
 mkdir -p "${OUTDIR}"
 
@@ -17,5 +17,5 @@ SHA512SUM="$(sha512sum "$DEB" | cut -d' ' -f1)"
 sed \
   -e 's/@version@/'"$VERSION"'/g' \
   -e 's/@sha512sum@/'"$SHA512SUM"'/g' \
-  .hack/linux/pkgbuild/arch-install.sh.tmpl \
-  > .hack/linux/pkgbuild/arch-install.sh
+  scripts/linux/pkgbuild/arch-install.sh.tmpl \
+  > scripts/linux/pkgbuild/arch-install.sh

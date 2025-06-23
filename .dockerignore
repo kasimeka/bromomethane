@@ -9,7 +9,7 @@ node_modules
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 /scripts/build_for_release.sh
-/.hack/linux/bundles
+/scripts/linux/bundles
 
 **/target
 **/gen/schemas
@@ -33,8 +33,8 @@ flake.lock
 shell.nix
 default.nix
 /result
-/.hack/pnpm-lock.yaml
-/.hack/linux/bundle.sh
-/.hack/linux/pkgbuild
+/scripts/pnpm-lock.yaml
+/scripts/linux/bundle.sh
+/scripts/linux/pkgbuild
 /scripts/
 /version_updater/

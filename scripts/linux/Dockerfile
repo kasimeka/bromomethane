@@ -3,7 +3,7 @@ FROM ubuntu:noble AS ubuntu
 
 FROM ubuntu AS base
 
-COPY .hack/linux/install-deps.sh .
+COPY scripts/linux/install-deps.sh .
 RUN apt-get update && ./install-deps.sh && apt-get clean && rm -rf /var/lib/apt/lists/*
 ENV PKG_CONFIG_PATH="/usr/lib/pkgconfig:/usr/lib/x86_64-linux-gnu/pkgconfig"
 
