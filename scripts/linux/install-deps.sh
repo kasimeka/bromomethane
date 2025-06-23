@@ -7,8 +7,6 @@ curl -fsSL https://deb.nodesource.com/setup_23.x -o nodesource_setup.sh \
   | bash
 
 apt-get install -y \
-  unzip \
-  \
   nodejs \
   npm \
   \
