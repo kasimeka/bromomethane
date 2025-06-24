@@ -45,6 +45,9 @@ importers:
       '@tauri-apps/cli':
         specifier: ^2.5.0
         version: 2.5.0
+      '@total-typescript/ts-reset':
+        specifier: ^0.6.1
+        version: 0.6.1
       '@types/lodash':
         specifier: 4.17.16
         version: 4.17.16
@@ -54,6 +57,12 @@ importers:
       marked:
         specifier: ^15.0.12
         version: 15.0.12
+      prettier:
+        specifier: ^3.6.0
+        version: 3.6.0
+      prettier-plugin-svelte:
+        specifier: ^3.4.0
+        version: 3.4.0(prettier@3.6.0)(svelte@5.34.7)
       svelte:
         specifier: ^5.33.10
         version: 5.34.7
@@ -470,6 +479,9 @@ packages:
   '@tauri-apps/plugin-window-state@2.2.3':
     resolution: {integrity: sha512-Iqqzugs6lxpa9JPOe4O33lkCUyMGvh9dqnXof1tK4dP2wU7jKa7W3MLwVyo6c3oVl3dUCm73wkB3RJ0exR0SPg==}
 
+  '@total-typescript/ts-reset@0.6.1':
+    resolution: {integrity: sha512-cka47fVSo6lfQDIATYqb/vO1nvFfbPw7uWLayIXIhGETj0wcOOlrlkobOMDNQOFr9QOafegUPq13V2+6vtD7yg==}
+
   '@types/cookie@0.6.0':
     resolution: {integrity: sha512-4Kh9a6B2bQciAhf7FSuMRRkUWecJgJu9nPnx3yzpsfXX/c50REIqpHY4C82bXP90qrLtXtkDxTZosYO3UpOwlA==}
 
@@ -689,6 +701,17 @@ packages:
   postcss@8.5.6:
     resolution: {integrity: sha512-3Ybi1tAuwAP9s0r1UQ2J4n5Y0G05bJkpUIO0/bI9MhwmD70S5aTWbXGBwxHrelT+XM1k6dM0pk+SwNkpTRN7Pg==}
     engines: {node: ^10 || ^12 || >=14}
+
+  prettier-plugin-svelte@3.4.0:
+    resolution: {integrity: sha512-pn1ra/0mPObzqoIQn/vUTR3ZZI6UuZ0sHqMK5x2jMLGrs53h0sXhkVuDcrlssHwIMk7FYrMjHBPoUSyyEEDlBQ==}
+    peerDependencies:
+      prettier: ^3.0.0
+      svelte: ^3.2.0 || ^4.0.0-next.0 || ^5.0.0-next.0
+
+  prettier@3.6.0:
+    resolution: {integrity: sha512-ujSB9uXHJKzM/2GBuE0hBOUgC77CN3Bnpqa+g80bkv3T3A93wL/xlzDATHhnhkzifz/UE2SNOvmbTz5hSkDlHw==}
+    engines: {node: '>=14'}
+    hasBin: true
 
   proxy-from-env@1.1.0:
     resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
@@ -1076,6 +1099,8 @@ snapshots:
     dependencies:
       '@tauri-apps/api': 2.5.0
 
+  '@total-typescript/ts-reset@0.6.1': {}
+
   '@types/cookie@0.6.0': {}
 
   '@types/estree@1.0.8': {}
@@ -1276,6 +1301,13 @@ snapshots:
       nanoid: 3.3.11
       picocolors: 1.1.1
       source-map-js: 1.2.1
+
+  prettier-plugin-svelte@3.4.0(prettier@3.6.0)(svelte@5.34.7):
+    dependencies:
+      prettier: 3.6.0
+      svelte: 5.34.7
+
+  prettier@3.6.0: {}
 
   proxy-from-env@1.1.0: {}
 

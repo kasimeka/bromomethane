@@ -51,14 +51,14 @@
 
             pnpmDeps = pkgs.pnpm.fetchDeps {
               inherit pname version src;
-              hash = "sha256-wMQkftXNiP0OqyHWtMawxKGUnKesI3nilvL0Pb5okok=";
+              hash = "sha256-hhqoVpviKdszKlGoQ4UsmYRnTfG2BAk4zBEtv8bLG5s=";
             };
 
             nativeBuildInputs = with pkgs; [
               pkg-config
               cargo-tauri.hook
 
-              nodejs
+              nodePackages_latest.nodejs
               pnpm
               pnpm.configHook
 
@@ -98,21 +98,32 @@
         packages.default = self.packages.${system}.bromomethane;
         packages.bromomethane = drv;
 
-        devShells.default = self.devShells.${system}.pure;
-        devShells.pure = pkgs.mkShell {
+        devShells.default = self.devShells.${system}.full;
+        devShells.minimal = pkgs.mkShell {
           inputsFrom = [self.packages.${system}.bromomethane];
-          packages = with pkgs;
-            lib.optionals stdenv.isLinux [xdg-utils]
-            ++ [
-              just
-              rust-analyzer
-              clippy
-              rustfmt
-            ];
+          packages = with pkgs; lib.optionals stdenv.isLinux [xdg-utils];
           shellHook = with pkgs;
             lib.optionalString stdenv.hostPlatform.isLinux ''
               export GSETTINGS_SCHEMA_DIR="${glib.getSchemaPath gtk3}"
             '';
+        };
+        devShells.full = pkgs.mkShell {
+          inputsFrom = [self.devShells.${system}.minimal];
+          packages = with pkgs;
+            [
+              just
+              rust-analyzer
+              clippy
+              rustfmt
+
+              prettierd
+              eslint_d
+            ]
+            ++ (with nodePackages_latest; [
+              svelte-language-server
+              typescript-language-server
+              vscode-langservers-extracted
+            ]);
         };
       }
     );

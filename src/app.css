@@ -1,52 +1,52 @@
 .default-scrollbar {
-    &::-webkit-scrollbar {
-        width: 10px;
-    }
+  &::-webkit-scrollbar {
+    width: 10px;
+  }
 
-    &::-webkit-scrollbar-track {
-        background: transparent;
-        border-radius: 15px;
-    }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 15px;
+  }
 
-    &::-webkit-scrollbar-thumb {
-        background: #f4eee0;
-        border: 2px solid rgba(193, 65, 57, 0.8);
-        border-radius: 15px;
-    }
+  &::-webkit-scrollbar-thumb {
+    background: #f4eee0;
+    border: 2px solid rgba(193, 65, 57, 0.8);
+    border-radius: 15px;
+  }
 
-    &::-webkit-scrollbar:horizontal {
-        display: none;
-    }
+  &::-webkit-scrollbar:horizontal {
+    display: none;
+  }
 
-    &::-webkit-scrollbar-corner {
-        background-color: transparent;
-    }
+  &::-webkit-scrollbar-corner {
+    background-color: transparent;
+  }
 }
 
 .container {
-    width: 100%; 
-    height: 100%;
-    overflow-y: auto;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .spinner {
-    width: 13px;
-    height: 13px;
-    border: 2px solid #f4eee0;
-    border-bottom-color: transparent;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
+  width: 13px;
+  height: 13px;
+  border: 2px solid #f4eee0;
+  border-bottom-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
 }
 
 /* #region Animations */
 
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(360deg);
-    }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* #endregion */
@@ -54,9 +54,9 @@
 /* #region Fonts */
 
 @font-face {
-    font-family: "M6X11";
-    src: url("/fonts/m6x11plus.ttf") format("truetype");
-    font-display: swap;
+  font-family: "M6X11";
+  src: url("/fonts/m6x11plus.ttf") format("truetype");
+  font-display: swap;
 }
 
 /* #endregion */
