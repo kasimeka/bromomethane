@@ -4,6 +4,7 @@ use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::PathBuf;
@@ -29,7 +30,7 @@ pub struct Mod {
     pub title: String,
     pub description: String,
     pub image: Option<String>,
-    pub categories: Vec<Category>,
+    pub categories: HashSet<Category>,
     pub colors: ColorPair,
     pub installed: bool,
     pub requires_steamodded: bool,
@@ -48,7 +49,7 @@ pub struct ColorPair {
     pub color2: String,
 }
 
-#[derive(Serialize_repr, Deserialize_repr, Debug, Clone, Copy, PartialEq)]
+#[derive(Serialize_repr, Eq, Hash, Deserialize_repr, Debug, Clone, Copy, PartialEq)]
 #[repr(u32)]
 pub enum Category {
     Content = 0,

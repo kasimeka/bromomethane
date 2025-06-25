@@ -1,4 +1,5 @@
 <script lang="ts">
+  import * as tauri from "../../lib/tauri-wrappers";
   import type {InstalledMod, Mod} from "../../stores/modStore";
   import {onMount} from "svelte";
   import {
@@ -8,7 +9,7 @@
     uninstallDialogStore,
   } from "../../stores/modStore";
   import {debounce} from "lodash";
-  import FlexSearch from "flexsearch";
+  import FlexSearch, {Index} from "flexsearch";
   import {currentModView} from "../../stores/modStore";
   import {invoke} from "@tauri-apps/api/core";
   import {fade} from "svelte/transition";
@@ -17,10 +18,15 @@
   let searchQuery = $state("");
   let searchResults = $state<Mod[]>([]);
   let isSearching = $state(false);
-  let searchIndex: any = $state(null);
+  let searchIndex: Index<false, false, true> = $state(
+    new FlexSearch.Index({
+      tokenize: "forward",
+      preset: "match",
+      cache: true,
+    }),
+  );
   let mods = $state<Mod[]>([]);
   let installedMods = $state<InstalledMod[]>([]);
-  let mod = $state<Mod | null>(null);
   let searchInput: HTMLInputElement;
 
   function handleModClick(mod: Mod) {
@@ -192,7 +198,6 @@
     // Only proceed if newMod is different from the previous mod
     if (newMod && (!prevMod || newMod.title !== prevMod.title)) {
       prevMod = newMod;
-      mod = newMod;
 
       // Move the installation check outside of the reactive context
       setTimeout(() => {
@@ -201,24 +206,23 @@
     }
   });
 
-  let indexes: number[] = $state([]);
+  let indices: number[] = $state([]);
+  // @ts-expect-error <https://github.com/sveltejs/svelte/issues/9520>
   $effect(async () => {
-    await invoke("fetch_thumbnails_by_idx", {indexes});
-    const mods_ = await invoke<Array<Mod>>("get_mod_list");
-    for (const n of indexes) {
+    await invoke("fetch_thumbnails_by_indices", {indices});
+    const mods_ = await tauri.get_mod_list();
+    const res: Array<Mod> = [];
+    for (const n of indices) {
+      if (!mods_[n]) continue;
       mods_[n].image ||= "images/cover.jpg";
+      res.push(mods_[n]);
     }
     modsStore.set(mods_);
-    searchResults = indexes.map(idx => mods_[idx]);
+    searchResults = res;
   });
 
   onMount(() => {
     // Initialize the search index
-    searchIndex = new FlexSearch.Index({
-      tokenize: "forward",
-      preset: "match",
-      cache: true,
-    });
 
     $effect(() => {
       if (searchInput) {
@@ -230,7 +234,7 @@
     return modsStore.subscribe(currentMods => {
       mods = currentMods;
       if (mods.length > 0) {
-        // Instead of clear(), recreate the index
+        // Instead of clear(), recreate the index, TODO: why?
         searchIndex = new FlexSearch.Index({
           tokenize: "forward",
           preset: "match",
@@ -238,11 +242,10 @@
         });
 
         mods.forEach((mod, idx) => {
-          const searchText = `${mod.title} ${mod.publisher} ${mod.description}`
+          const searchText = `${mod.title || ""} ${mod.publisher || ""} ${mod.description || ""}`
             .toLowerCase()
-            .match(/[\sa-z0-9]/g)
-            .join("");
-          searchIndex.add(idx, searchText);
+            .match(/[\sa-z0-9]/g);
+          searchIndex.add(idx, searchText ? searchText.join("") : "");
         });
       }
     });
@@ -259,9 +262,9 @@
 
     try {
       const searchTerm = searchQuery.toLowerCase();
-      const results = searchIndex.search(searchTerm);
-      indexes = results;
-      searchResults = results.map(idx => mods[idx]);
+      const res = searchIndex.search(searchTerm);
+      searchResults = res.map(idx => mods[idx]).filter(Boolean);
+      indices = res;
       showSpinner = false;
       isSearching = false;
     } catch (error) {
@@ -309,7 +312,7 @@
         </p>
       {:else if searchResults.length > 0}
         <div transition:fade={{duration: 100}} class="results-wrapper">
-          {#each searchResults as mod}
+          {#each searchResults as mod (`${mod.publisher}@${mod.title}`)}
             <ModCard {mod} oninstallclick={installMod} onuninstallclick={uninstallMod} onmodclick={handleModClick} />
           {/each}
         </div>

@@ -36,7 +36,6 @@
   }
 
   const {mod, onCheckDependencies}: Props = $props();
-  const isDefaultCover = (imageUrl: string) => imageUrl.includes("cover.jpg");
   function handleAuxClick(event: MouseEvent) {
     if (event.button === 3) {
       event.preventDefault();
@@ -142,9 +141,9 @@
       return {isMod: false, modName: ""};
     }
 
-    // Common patterns for mod links
-    const githubModPattern1 = /github\.com\/([^\/]+)\/([^\/\?#]+)(?:$|\?|\#)/;
-    const githubModPattern2 = /github\.com\/([^\/]+)\/([^\/\?#]+)(?:\/|\/tree\/|\/blob\/)/;
+    // TODO: why
+    const githubModPattern1 = /github\.com\/([^/]+)\/([^/?#]+)(?:$|\?|#)/;
+    const githubModPattern2 = /github\.com\/([^/]+)\/([^/?#]+)(?:\/|\/tree\/|\/blob\/)/;
 
     // Check if URL matches any pattern
     let match = url.match(githubModPattern1) || url.match(githubModPattern2);
@@ -194,10 +193,7 @@
         const [cachedVers, cachedTs] = cached;
         if (Date.now() - cachedTs * 1000 < VERSION_CACHE_DURATION) {
           steamoddedVersions = cachedVers;
-          selectedVersion = "newest";
-          if (steamoddedVersions.length > 0) {
-            selectedVersion = steamoddedVersions[0];
-          }
+          selectedVersion = steamoddedVersions[0] || "newest";
           cachedVersions.update(c => ({
             ...c,
             steamodded: cachedVers,
@@ -212,11 +208,7 @@
     try {
       const versions: string[] = await invoke("get_steamodded_versions");
       steamoddedVersions = versions;
-      selectedVersion = "newest";
-
-      if (versions.length > 0) {
-        selectedVersion = versions[0];
-      }
+      selectedVersion = versions[0] || "newest";
 
       cachedVersions.update(c => ({...c, steamodded: versions}));
       await invoke("save_versions_cache", {
@@ -239,7 +231,8 @@
         const [cachedVers, cachedTs] = cached;
         if (Date.now() - cachedTs * 1000 < VERSION_CACHE_DURATION) {
           talismanVersions = cachedVers;
-          if (cachedVers.length > 0) {
+
+          if (cachedVers[0]) {
             selectedVersion = cachedVers[0];
           }
           cachedVersions.update(c => ({
@@ -256,7 +249,7 @@
     try {
       const versions: string[] = await invoke("get_talisman_versions");
       talismanVersions = versions;
-      if (versions.length > 0) {
+      if (versions[0]) {
         selectedVersion = versions[0];
       }
       cachedVersions.update(c => ({...c, talisman: versions}));
@@ -514,6 +507,7 @@
   });
 
   // In the processInternalModLinks function
+  // TODO: wut?
   async function processInternalModLinks() {
     if (!description) return;
 
@@ -594,11 +588,8 @@
       currentModView.set(null);
       return;
     }
-
-    history.shift();
-
-    const modName = history[0].modName;
-    setModViewByTitle(modName);
+    history.shift(); // history.length is at least 1
+    setModViewByTitle(history[0]!.modName);
   }
 
   function handleClose() {
@@ -761,13 +752,9 @@
     <div class="content-grid">
       <div class="left-column">
         <div class="image-container">
-          {#if !isDefaultCover(mod.image)}
-            <button class="image-button" aria-label={`View full size image of ${mod.title}`}>
-              <img src={mod.image} alt={mod.title} draggable="false" />
-            </button>
-          {:else}
+          <button class="image-button" aria-label={`View full size image of ${mod.title}`}>
             <img src={mod.image} alt={mod.title} draggable="false" />
-          {/if}
+          </button>
         </div>
 
         <div class="button-container">
@@ -831,7 +818,7 @@
             {:else}
               <select bind:value={selectedVersion} disabled={$loadingStates[mod.title]}>
                 <option value="newest" selected>latest (could be unstable)</option>
-                {#each talismanVersions as version}
+                {#each talismanVersions as version (version)}
                   <option value={version}>{version}</option>
                 {/each}
               </select>
@@ -847,7 +834,7 @@
             {:else}
               <select bind:value={selectedVersion} disabled={$loadingStates[mod.title]}>
                 <option value="newest" selected>latest (could be unstable)</option>
-                {#each steamoddedVersions as version}
+                {#each steamoddedVersions as version (version)}
                   <option value={version}>{version}</option>
                 {/each}
               </select>
@@ -868,7 +855,7 @@
           <div class="categories-section">
             <h3>Categories</h3>
             <div class="category-tags">
-              {#each mod.categories as category}
+              {#each mod.categories as category (category)}
                 <button
                   class="category-tag"
                   onclick={() => {
@@ -918,6 +905,8 @@
             }
           }}
         >
+          <!-- TODO: real markdown renderer and real markdown sanitization -->
+          <!-- eslint-disable-next-line svelte/no-at-html-tags -->
           {@html renderedDescription}
         </div>
       </div>
@@ -1449,10 +1438,6 @@
     cursor: default;
   }
 
-  /* .image-container .clickable { */
-  /* 	cursor: pointer; */
-  /* } */
-
   @media (max-width: 1360px) {
     .content-grid {
       grid-template-columns: 1fr;
@@ -1460,10 +1445,6 @@
     .image-container {
       width: 100%;
       height: 350px;
-
-      & > img {
-        height: 100%;
-      }
     }
 
     .image-button {

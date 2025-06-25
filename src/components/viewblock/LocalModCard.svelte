@@ -221,7 +221,7 @@
       "#86A367",
       "#748C8A",
     ];
-    return colors[Math.floor(Math.random() * colors.length)];
+    return colors[Math.floor(Math.random() * colors.length)] as string;
   }
 
   function darkenColor(color: string, percent: number) {

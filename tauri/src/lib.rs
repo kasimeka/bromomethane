@@ -215,9 +215,9 @@ async fn fetch_thumbnails_page(
     Ok(())
 }
 #[tauri::command]
-async fn fetch_thumbnails_by_idx(
+async fn fetch_thumbnails_by_indices(
     state: tauri::State<'_, AppState<'_>>,
-    indexes: Vec<usize>,
+    indices: Vec<usize>,
 ) -> Result<(), String> {
     if std::env::var("BMM_NO_THUMBNAILS").is_ok() {
         return Ok(());
@@ -226,9 +226,9 @@ async fn fetch_thumbnails_by_idx(
 
     let mut blobs = index.mods.iter_mut().map(|(_, m)| m.thumbnail.as_mut());
     let mut thumbnails = Vec::new();
-    for index_val in &indexes {
-        if let Some(Some(hysm)) = blobs.nth(*index_val) {
-            thumbnails.push(hysm);
+    for index_val in &indices {
+        if let Some(Some(blob)) = blobs.nth(*index_val) {
+            thumbnails.push(blob);
         }
     }
     lfs::mut_fetch_blobs(&mut thumbnails, &state.reqwest, CONCURRENCY_FACTOR).await;
@@ -2104,6 +2104,7 @@ async fn set_security_warning_acknowledged(
 }
 
 #[tauri::command]
+#[allow(clippy::needless_pass_by_value)]
 fn exit_application(app_handle: tauri::AppHandle) {
     app_handle.exit(0);
 }
@@ -2165,7 +2166,7 @@ pub fn run() {
             delete_manual_mod,
             exit_application,
             fetch_thumbnails_page,
-            fetch_thumbnails_by_idx,
+            fetch_thumbnails_by_indices,
             find_steam_balatro,
             force_remove_mod,
             get_balatro_path,

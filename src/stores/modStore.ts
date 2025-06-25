@@ -4,7 +4,7 @@ export interface Mod {
   title: string;
   description: string;
   image: string;
-  categories: Category[];
+  categories: Set<Category>;
   colors: {
     color1: string;
     color2: string;
@@ -14,7 +14,7 @@ export interface Mod {
   publisher: string;
   repo: string;
   download_url: string;
-  folderName: string;
+  folder_name: string;
   version: string;
   installed: boolean;
   last_updated: number;
