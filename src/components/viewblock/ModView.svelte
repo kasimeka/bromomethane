@@ -50,7 +50,7 @@
       case 1:
         return "Joker";
       case 2:
-        return "Quality of Life";
+        return "Quality Of Life";
       case 3:
         return "Technical";
       case 4:
@@ -174,7 +174,9 @@
         const titleUnderscores = mod.title.toLowerCase().replace(/\s+/g, "_");
         const titleNoSpaces = mod.title.toLowerCase().replace(/\s+/g, "");
 
-        return repoName === titleDashes || repoName === titleUnderscores || repoName === titleNoSpaces;
+        return (
+          repoName === titleDashes || repoName === titleUnderscores || repoName === titleNoSpaces
+        );
       });
 
       if (foundMod) {
@@ -188,7 +190,9 @@
   async function loadSteamoddedVersions() {
     if (loadingVersions) return;
     try {
-      const cached = await invoke<[string[], number]>("load_versions_cache", {modType: "steamodded"});
+      const cached = await invoke<[string[], number]>("load_versions_cache", {
+        modType: "steamodded",
+      });
       if (cached) {
         const [cachedVers, cachedTs] = cached;
         if (Date.now() - cachedTs * 1000 < VERSION_CACHE_DURATION) {
@@ -270,7 +274,9 @@
 
     try {
       await getAllInstalledMods();
-      const installedMod = installedMods.find(m => m.name.toLowerCase() === mod.title.toLowerCase());
+      const installedMod = installedMods.find(
+        m => m.name.toLowerCase() === mod.title.toLowerCase(),
+      );
 
       if (!installedMod) return;
 
@@ -327,7 +333,9 @@
               folderName: mod.folder_name || mod.title.replace(/\s+/g, ""),
             });
           } else {
-            installedPath = await invoke<string>("install_steamodded_version", {version: selectedVersion});
+            installedPath = await invoke<string>("install_steamodded_version", {
+              version: selectedVersion,
+            });
           }
           const pathExists = await invoke("verify_path_exists", {
             path: installedPath,
@@ -358,7 +366,9 @@
               folderName: mod.folder_name || mod.title.replace(/\s+/g, ""),
             });
           } else {
-            installedPath = await invoke<string>("install_talisman_version", {version: selectedVersion});
+            installedPath = await invoke<string>("install_talisman_version", {
+              version: selectedVersion,
+            });
           }
           const pathExists = await invoke("verify_path_exists", {
             path: installedPath,
@@ -432,7 +442,8 @@
       // But skip this check if it's an update, as dependencies should already be installed
       if (
         !isUpdate &&
-        ((mod.requires_steamodded && !steamoddedInstalled) || (mod.requires_talisman && !talismanInstalled))
+        ((mod.requires_steamodded && !steamoddedInstalled) ||
+          (mod.requires_talisman && !talismanInstalled))
       ) {
         // Call the handler with the appropriate requirements AND the download action
         onCheckDependencies?.(
@@ -631,7 +642,11 @@
   // Handle loading of version data for special mods
   $effect(() => {
     const currentModTitle = mod?.title?.toLowerCase();
-    if (currentModTitle === "steamodded" && currentModTitle !== prevModTitle && !versionLoadStarted) {
+    if (
+      currentModTitle === "steamodded" &&
+      currentModTitle !== prevModTitle &&
+      !versionLoadStarted
+    ) {
       prevModTitle = currentModTitle;
       versionLoadStarted = true;
 
@@ -641,7 +656,11 @@
           versionLoadStarted = false;
         });
       }, 0);
-    } else if (currentModTitle === "talisman" && currentModTitle !== prevModTitle && !versionLoadStarted) {
+    } else if (
+      currentModTitle === "talisman" &&
+      currentModTitle !== prevModTitle &&
+      !versionLoadStarted
+    ) {
       prevModTitle = currentModTitle;
       versionLoadStarted = true;
 
@@ -732,7 +751,11 @@
   }}
 />
 
-<div class="mod-view default-scrollbar" transition:fade={{duration: 300, easing: cubicOut}} bind:this={modView}>
+<div
+  class="mod-view default-scrollbar"
+  transition:fade={{duration: 300, easing: cubicOut}}
+  bind:this={modView}
+>
   <div class="mod-content">
     <div class="header-container">
       <div class="header">
@@ -741,7 +764,11 @@
         </button>
 
         {#if history.length > 1}
-          <button transition:fade={{duration: 300, easing: cubicOut}} onclick={handleClose} class="close-button">
+          <button
+            transition:fade={{duration: 300, easing: cubicOut}}
+            onclick={handleClose}
+            class="close-button"
+          >
             <X size={20} />
           </button>
         {/if}
@@ -752,7 +779,7 @@
     <div class="content-grid">
       <div class="left-column">
         <div class="image-container">
-          <button class="image-button" aria-label={`View full size image of ${mod.title}`}>
+          <button class="image-button">
             <img src={mod.image} alt={mod.title} draggable="false" />
           </button>
         </div>
@@ -777,7 +804,11 @@
 
           {#if $installationStatus[mod.title] && $updateAvailableStore[mod.title]}
             <!-- Update button (when installed and update available) -->
-            <button class="update-button" onclick={() => updateMod(mod)} disabled={$loadingStates[mod.title]}>
+            <button
+              class="update-button"
+              onclick={() => updateMod(mod)}
+              disabled={$loadingStates[mod.title]}
+            >
               {#if $loadingStates[mod.title]}
                 <div class="spinner"></div>
               {:else}
@@ -1059,15 +1090,15 @@
 
   .image-container {
     border-radius: 8px;
-    height: 250px;
+    height: 200px;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   }
 
   img {
     width: 100%;
-    height: 250px;
-    object-fit: cover;
+    height: 200px;
+    object-fit: contain;
     transition: transform 0.2s ease;
     display: block;
   }
