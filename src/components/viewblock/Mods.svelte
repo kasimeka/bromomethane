@@ -32,6 +32,7 @@
   import LocalModCard from "./LocalModCard.svelte";
   import {checkModInCache, fetchCachedMods, forceRefreshCache} from "../../stores/modCache";
   import {updateAvailableStore} from "../../stores/modStore";
+  import Page from "../../routes/+page.svelte";
 
   // Add this import for the enabled/disabled mod store
   const modEnabledStore = writable<Record<string, boolean>>({});
@@ -559,11 +560,11 @@
 
   async function fetchModDirectories(): Promise<Mod[]> {
     try {
-      const lastFetched = await invoke<number>("get_last_fetched");
-      if (Date.now() - lastFetched > 3600 * 1000) {
-        await invoke("init_index");
-        await invoke("update_last_fetched");
-      }
+      // const lastFetched = await invoke<number>("get_last_fetched");
+      // if (Date.now() - lastFetched > 3600 * 1000) {
+      await invoke("init_index");
+      await invoke("update_last_fetched");
+      // }
 
       const mods = await tauri.get_mod_list();
 
@@ -596,15 +597,23 @@
     {name: "Resource Packs", icon: FolderHeart},
     {name: "API", icon: Gamepad2},
   ];
-  $: filteredIndices = (() => {
-    const c = Category[$currentCategory.replace(/\s/g, "") as keyof typeof Category];
-    if (!c) return $modsStore.map((_, i) => i);
-    return $modsStore
-      .map((m, i) => {
-        if (m.categories.has(c)) return i;
-      })
-      .filter(Boolean);
-  })();
+  $: filteredIndices = $modsStore
+    .filter(m => {
+      const c = Category[$currentCategory.replace(/\s/g, "") as keyof typeof Category];
+      if (!c) return true;
+      return m.categories.has(c);
+    })
+    .map((_, i) => i);
+  //   (() => {
+  //   const c = Category[$currentCategory.replace(/\s/g, "") as keyof typeof Category];
+  //   if (!c) return $modsStore.map((_, i) => i);
+  //   return $modsStore
+  //     .map((m, i) => {
+  //       if (m.categories.has(c)) return i;
+  //     })
+  //     .filter(Boolean);
+  // })();
+
   function handleCategoryClick(category: string) {
     currentPage.set(1);
     startPage = 1; // Reset sliding window
@@ -621,9 +630,13 @@
   });
 
   $: {
-    if (filteredMods) {
-      // Ensure pagination is updated
-      paginatedMods = filteredMods.slice(($currentPage - 1) * $itemsPerPage, $currentPage * $itemsPerPage);
+    if (filteredIndices.length) {
+      // Ensure pagination is updated, TODO: why tho?
+      // eslint-disable-next-line svelte/no-reactive-reassign
+      paginatedIndices = filteredIndices.slice(
+        ($currentPage - 1) * $itemsPerPage,
+        $currentPage * $itemsPerPage,
+      );
       // Update enabled/disabled lists if on the InstalledMods page
       if ($currentCategory === "Installed Mods") {
         updateEnabledDisabledLists();
@@ -631,10 +644,13 @@
     }
   }
 
-  // eslint-disable-next-line svelte/no-reactive-functions
-  $: fetchThumbnails = async () => {
+  let lastFetchedThumbs: Set<number> = new Set();
+  $: (async () => {
+    // TODO: aaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
+    if (paginatedIndices.every(x => lastFetchedThumbs.has(x))) return;
+
     const offset = ($currentPage - 1) * $itemsPerPage;
-    await invoke("fetch_thumbnails_page", {offset, count: $itemsPerPage});
+    await invoke("fetch_thumbnails_by_indices", {indices: paginatedIndices});
 
     const mods = await tauri.get_mod_list();
 
@@ -646,11 +662,10 @@
     }
 
     modsStore.set(mods);
+    // eslint-disable-next-line svelte/infinite-reactive-loop
+    lastFetchedThumbs = new Set(paginatedIndices);
     await invoke("update_last_fetched");
-  };
-  $: {
-    if (!isLoading) fetchThumbnails();
-  }
+  })();
 
   $: totalPages = Math.ceil(filteredIndices.length / $itemsPerPage);
   $: paginatedIndices = filteredIndices.slice(

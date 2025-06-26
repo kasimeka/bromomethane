@@ -201,6 +201,7 @@ async fn fetch_thumbnails_page(
     offset: usize,
     count: usize,
 ) -> Result<(), String> {
+    log::info!("by page: infinite re-renders?");
     if std::env::var("BMM_NO_THUMBNAILS").is_ok() {
         return Ok(());
     }
@@ -219,6 +220,7 @@ async fn fetch_thumbnails_by_indices(
     state: tauri::State<'_, AppState<'_>>,
     indices: Vec<usize>,
 ) -> Result<(), String> {
+    log::debug!("by indices: infinite re-renders?");
     if std::env::var("BMM_NO_THUMBNAILS").is_ok() {
         return Ok(());
     }
@@ -232,17 +234,6 @@ async fn fetch_thumbnails_by_indices(
         }
     }
     lfs::mut_fetch_blobs(&mut thumbnails, &state.reqwest, CONCURRENCY_FACTOR).await;
-    for i in &indices {
-        log::info!(
-            "mod {} has thumbnail of size {}",
-            index.mods[*i].0,
-            index.mods[*i]
-                .1
-                .thumbnail
-                .as_ref()
-                .map_or(0, |t| t.data.as_ref().map_or(0, |d| d.len()))
-        );
-    }
 
     let mut i = state.index.write().map_err(|e| e.to_string())?;
     *i = index;
