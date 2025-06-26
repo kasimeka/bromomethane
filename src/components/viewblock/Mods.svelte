@@ -1,4 +1,5 @@
 <script lang="ts">
+  import "@total-typescript/ts-reset";
   import {
     Download,
     Flame,
@@ -32,7 +33,6 @@
   import LocalModCard from "./LocalModCard.svelte";
   import {checkModInCache, fetchCachedMods, forceRefreshCache} from "../../stores/modCache";
   import {updateAvailableStore} from "../../stores/modStore";
-  import Page from "../../routes/+page.svelte";
 
   // Add this import for the enabled/disabled mod store
   const modEnabledStore = writable<Record<string, boolean>>({});
@@ -40,8 +40,8 @@
   let installedMods: InstalledMod[] = [];
 
   // Add these variables to track enabled/disabled mods
-  let enabledMods: Mod[] = [];
-  let disabledMods: Mod[] = [];
+  let enabledModIndices: Array<number> = [];
+  let disabledModIndices: Array<number> = [];
   let enabledLocalMods: LocalMod[] = [];
   let disabledLocalMods: LocalMod[] = [];
 
@@ -68,7 +68,6 @@
 
   async function handleModToggled(): Promise<void> {
     if ($currentCategory === "Installed Mods") {
-      // First check catalog mods
       for (const mod of paginatedMods) {
         if ($installationStatus[mod.title]) {
           try {
@@ -104,8 +103,8 @@
       updateEnabledDisabledLists();
 
       // Force Svelte reactivity by creating new array references
-      enabledMods = [...enabledMods];
-      disabledMods = [...disabledMods];
+      enabledModIndices = [...enabledModIndices];
+      disabledModIndices = [...disabledModIndices];
       enabledLocalMods = [...enabledLocalMods];
       disabledLocalMods = [...disabledLocalMods];
     }
@@ -219,17 +218,22 @@
   }
 
   function updateEnabledDisabledLists() {
-    enabledMods = $modsStore.filter(
-      mod => $installationStatus[mod.title] && $modEnabledStore[mod.title],
-    );
-    disabledMods = $modsStore.filter(
-      mod => $installationStatus[mod.title] && !$modEnabledStore[mod.title],
-    );
+    enabledModIndices = $modsStore
+      .map((m, i) => {
+        if ($installationStatus[m.title] && $modEnabledStore[m.title]) return i;
+      })
+      .filter(Boolean);
+    disabledModIndices = $modsStore
+      .map((m, i) => {
+        if ($installationStatus[m.title] && !$modEnabledStore[m.title]) return i;
+      })
+      .filter(Boolean);
 
-    // Filter local mods - explicitly check for boolean values
-    enabledLocalMods = localMods.filter(mod => $modEnabledStore[mod.name] === true);
-    disabledLocalMods = localMods.filter(mod => $modEnabledStore[mod.name] === false);
+    enabledLocalMods = localMods.filter(mod => $modEnabledStore[mod.name]);
+    disabledLocalMods = localMods.filter(mod => !$modEnabledStore[mod.name]);
   }
+  $: enabledMods = enabledModIndices.map(i => $modsStore[i]).filter(Boolean);
+  $: disabledMods = disabledModIndices.map(i => $modsStore[i]).filter(Boolean);
 
   // Update the lists whenever the stores change
   $: {
@@ -592,27 +596,20 @@
     {name: "Content", icon: FolderHeart},
     {name: "Miscellaneous", icon: BookOpen},
     {name: "Joker", icon: Flame},
-    {name: "Quality of Life", icon: Star},
+    {name: "Quality Of Life", icon: Star},
     {name: "Technical", icon: Spade},
     {name: "Resource Packs", icon: FolderHeart},
     {name: "API", icon: Gamepad2},
   ];
-  $: filteredIndices = $modsStore
-    .filter(m => {
-      const c = Category[$currentCategory.replace(/\s/g, "") as keyof typeof Category];
-      if (!c) return true;
-      return m.categories.has(c);
-    })
-    .map((_, i) => i);
-  //   (() => {
-  //   const c = Category[$currentCategory.replace(/\s/g, "") as keyof typeof Category];
-  //   if (!c) return $modsStore.map((_, i) => i);
-  //   return $modsStore
-  //     .map((m, i) => {
-  //       if (m.categories.has(c)) return i;
-  //     })
-  //     .filter(Boolean);
-  // })();
+  $: filteredIndices = (() => {
+    const c = Category[$currentCategory.replace(/\s/g, "") as keyof typeof Category];
+    if (!c) return $modsStore.map((_, i) => i);
+    return $modsStore
+      .map((m, i) => {
+        if (m.categories.has(c)) return i;
+      })
+      .filter(Boolean);
+  })();
 
   function handleCategoryClick(category: string) {
     currentPage.set(1);
@@ -644,26 +641,28 @@
     }
   }
 
+  // TODO: aaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
   let lastFetchedThumbs: Set<number> = new Set();
   $: (async () => {
-    // TODO: aaaaaaaaaaaaaaaaaaaaaaaaahhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
-    if (paginatedIndices.every(x => lastFetchedThumbs.has(x))) return;
+    const indices =
+      $currentCategory === "Installed Mods"
+        ? [...enabledModIndices, ...disabledModIndices]
+        : paginatedIndices;
 
-    const offset = ($currentPage - 1) * $itemsPerPage;
-    await invoke("fetch_thumbnails_by_indices", {indices: paginatedIndices});
+    if (indices.every(x => lastFetchedThumbs.has(x))) return;
+
+    await invoke("fetch_thumbnails_by_indices", {indices});
 
     const mods = await tauri.get_mod_list();
 
-    const next = offset + $itemsPerPage;
-    for (let n = offset; n < next; n++) {
-      if (!mods[n]) continue;
-      // @ts-expect-error typescript goof?
-      mods[n].image ||= "images/cover.jpg";
+    for (let i of indices) {
+      if (!mods[i]) continue;
+      mods[i].image ||= "images/cover.jpg";
     }
 
-    modsStore.set(mods);
     // eslint-disable-next-line svelte/infinite-reactive-loop
-    lastFetchedThumbs = new Set(paginatedIndices);
+    lastFetchedThumbs = new Set(indices);
+    modsStore.set(mods);
     await invoke("update_last_fetched");
   })();
 
@@ -952,11 +951,11 @@
             <!-- Only proceed with catalog enabled/disabled sections if there are mods to show -->
             {#if paginatedIndices.length > 0}
               <!-- Enabled Catalog Mods -->
-              {#if enabledMods.length}
+              {#if enabledModIndices.length}
                 <div class="subsection-header enabled">
                   <h4>Enabled Catalog Mods</h4>
                   <p>
-                    {enabledMods.length} mod{enabledMods.length !== 1 ? "s" : ""} active
+                    {enabledModIndices.length} mod{enabledModIndices.length !== 1 ? "s" : ""} active
                   </p>
                 </div>
                 <div class="mods-grid" class:has-local-mods={localMods.length > 0}>
@@ -973,11 +972,11 @@
               {/if}
 
               <!-- Disabled Catalog Mods -->
-              {#if disabledMods.length}
+              {#if disabledModIndices.length}
                 <div class="subsection-header disabled">
                   <h4>Disabled Catalog Mods</h4>
                   <p>
-                    {disabledMods.length} mod{disabledMods.length !== 1 ? "s" : ""} inactive
+                    {disabledModIndices.length} mod{disabledModIndices.length !== 1 ? "s" : ""} inactive
                   </p>
                 </div>
                 <div class="mods-grid" class:has-local-mods={localMods.length > 0}>

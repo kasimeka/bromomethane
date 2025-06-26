@@ -229,8 +229,8 @@ async fn fetch_thumbnails_by_indices(
     let mut blobs = index.mods.iter_mut().map(|(_, m)| m.thumbnail.as_mut());
     let mut thumbnails = Vec::new();
     for i in &indices {
-        if let Some(Some(blob)) = blobs.nth(*i) {
-            thumbnails.push(blob);
+        if let Some(Some(t)) = blobs.nth(*i) {
+            thumbnails.push(t);
         }
     }
     lfs::mut_fetch_blobs(&mut thumbnails, &state.reqwest, CONCURRENCY_FACTOR).await;
@@ -304,6 +304,7 @@ fn get_color_pair(id: &str) -> &cache::ColorPair {
 
 #[tauri::command]
 async fn get_mod_list(state: tauri::State<'_, AppState<'_>>) -> Result<Vec<cache::Mod>, String> {
+    // TODO: load cache here? or maybe unify the schema across the tauri boundary
     let mods = state
         .index
         .read()
