@@ -226,12 +226,23 @@ async fn fetch_thumbnails_by_indices(
 
     let mut blobs = index.mods.iter_mut().map(|(_, m)| m.thumbnail.as_mut());
     let mut thumbnails = Vec::new();
-    for index_val in &indices {
-        if let Some(Some(blob)) = blobs.nth(*index_val) {
+    for i in &indices {
+        if let Some(Some(blob)) = blobs.nth(*i) {
             thumbnails.push(blob);
         }
     }
     lfs::mut_fetch_blobs(&mut thumbnails, &state.reqwest, CONCURRENCY_FACTOR).await;
+    for i in &indices {
+        log::info!(
+            "mod {} has thumbnail of size {}",
+            index.mods[*i].0,
+            index.mods[*i]
+                .1
+                .thumbnail
+                .as_ref()
+                .map_or(0, |t| t.data.as_ref().map_or(0, |d| d.len()))
+        );
+    }
 
     let mut i = state.index.write().map_err(|e| e.to_string())?;
     *i = index;

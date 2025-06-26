@@ -14,8 +14,7 @@
   } from "lucide-svelte";
   import ModView from "./ModView.svelte";
   import {fly} from "svelte/transition";
-  import {backgroundEnabled, loadingStates2} from "../../stores/modStore";
-  import {ArrowUpDown} from "lucide-svelte";
+  import {loadingStates2} from "../../stores/modStore";
   import {currentModView, currentCategory, uninstallDialogStore} from "../../stores/modStore";
   import type {LocalMod, Mod} from "../../stores/modStore";
   import {Category} from "../../stores/modStore";
@@ -23,6 +22,7 @@
   import type {InstalledMod} from "../../stores/modStore";
   import {open} from "@tauri-apps/plugin-shell";
   import {invoke} from "@tauri-apps/api/core";
+  import * as tauri from "../../lib/tauri-wrappers";
   import SearchView from "./SearchView.svelte";
   import {onMount} from "svelte";
   import {writable} from "svelte/store";
@@ -163,12 +163,10 @@
     return status;
   }
 
-  export let handleDependencyCheck: (requirements: DependencyCheck, downloadAction?: () => Promise<void>) => void;
-  // function onDependencyCheck(
-  //   event: CustomEvent<{ steamodded: boolean; talisman: boolean }>,
-  // ) {
-  //   handleDependencyCheck(event.detail);
-  // }
+  export let handleDependencyCheck: (
+    requirements: DependencyCheck,
+    downloadAction?: () => Promise<void>,
+  ) => void;
 
   export let mod: Mod | null;
 
@@ -220,9 +218,12 @@
   }
 
   function updateEnabledDisabledLists() {
-    // Filter catalog mods - explicitly check for boolean values
-    enabledMods = paginatedMods.filter(mod => $installationStatus[mod.title] && $modEnabledStore[mod.title] === true);
-    disabledMods = paginatedMods.filter(mod => $installationStatus[mod.title] && $modEnabledStore[mod.title] === false);
+    enabledMods = $modsStore.filter(
+      mod => $installationStatus[mod.title] && $modEnabledStore[mod.title],
+    );
+    disabledMods = $modsStore.filter(
+      mod => $installationStatus[mod.title] && !$modEnabledStore[mod.title],
+    );
 
     // Filter local mods - explicitly check for boolean values
     enabledLocalMods = localMods.filter(mod => $modEnabledStore[mod.name] === true);
@@ -292,7 +293,9 @@
     const isCoreMod = ["steamodded", "talisman"].includes(mod.title.toLowerCase());
     try {
       await getAllInstalledMods();
-      const installedMod = installedMods.find(m => m.name.toLowerCase() === mod.title.toLowerCase());
+      const installedMod = installedMods.find(
+        m => m.name.toLowerCase() === mod.title.toLowerCase(),
+      );
       if (!installedMod) return;
       if (isCoreMod) {
         // Get dependents
@@ -330,7 +333,9 @@
 
     try {
       // Get all installed mods with available updates
-      const modsToUpdate = $modsStore.filter(mod => $installationStatus[mod.title] && $updateAvailableStore[mod.title]);
+      const modsToUpdate = $modsStore.filter(
+        mod => $installationStatus[mod.title] && $updateAvailableStore[mod.title],
+      );
 
       if (modsToUpdate.length === 0) {
         addMessage("No updates available.", "info");
@@ -359,7 +364,11 @@
               await invoke("add_installed_mod", {
                 name: mod.title,
                 path: installedPath,
-                dependencies: mod.requires_steamodded ? ["Steamodded"] : mod.requires_talisman ? ["Talisman"] : [],
+                dependencies: mod.requires_steamodded
+                  ? ["Steamodded"]
+                  : mod.requires_talisman
+                    ? ["Talisman"]
+                    : [],
                 currentVersion: mod.version || "",
               });
             } else {
@@ -370,7 +379,9 @@
             return mod.title;
           } catch (error) {
             console.error(`Failed to update mod ${mod.title}:`, error);
-            throw new Error(`Failed to update ${mod.title}: ${error instanceof Error ? error.message : String(error)}`);
+            throw new Error(
+              `Failed to update ${mod.title}: ${error instanceof Error ? error.message : String(error)}`,
+            );
           }
         }),
       );
@@ -380,6 +391,7 @@
       const failed: string[] = [];
 
       updateResults.forEach((result, index) => {
+        if (!modsToUpdate[index]) return;
         const modTitle = modsToUpdate[index].title;
 
         // Clear loading state
@@ -410,7 +422,10 @@
       }
     } catch (error) {
       console.error("Failed to update mods:", error);
-      addMessage(`Update all failed: ${error instanceof Error ? error.message : String(error)}`, "error");
+      addMessage(
+        `Update all failed: ${error instanceof Error ? error.message : String(error)}`,
+        "error",
+      );
     }
   }
 
@@ -484,7 +499,10 @@
         await refreshInstalledMods();
       } catch (error) {
         console.error("Failed to install mod:", error);
-        addMessage(`Installation failed: ${error instanceof Error ? error.message : String(error)}`, "error");
+        addMessage(
+          `Installation failed: ${error instanceof Error ? error.message : String(error)}`,
+          "error",
+        );
       } finally {
         loadingStates2.update((s: Record<string, boolean>) => ({
           ...s,
@@ -511,7 +529,10 @@
           : true;
 
         // If any dependency is missing, show the Requires Popup
-        if ((mod.requires_steamodded && !steamoddedInstalled) || (mod.requires_talisman && !talismanInstalled)) {
+        if (
+          (mod.requires_steamodded && !steamoddedInstalled) ||
+          (mod.requires_talisman && !talismanInstalled)
+        ) {
           // Call the handler with the appropriate requirements and download action
           handleDependencyCheck(
             {
@@ -529,7 +550,10 @@
       await performDownload();
     } catch (error) {
       console.error("Failed to check dependencies:", error);
-      addMessage(`Dependency check failed: ${error instanceof Error ? error.message : String(error)}`, "error");
+      addMessage(
+        `Dependency check failed: ${error instanceof Error ? error.message : String(error)}`,
+        "error",
+      );
     }
   };
 
@@ -541,7 +565,7 @@
         await invoke("update_last_fetched");
       }
 
-      const mods = await invoke<Array<Mod>>("get_mod_list");
+      const mods = await tauri.get_mod_list();
 
       return mods;
     } catch (error) {
@@ -551,6 +575,14 @@
       isLoading = false;
     }
   }
+
+  function handleModClick(mod: Mod) {
+    currentModView.set(mod);
+  }
+
+  $currentCategory = "All Mods";
+
+  $: showSearch = $currentCategory === "Search";
 
   const categories = [
     {name: "Installed Mods", icon: Download},
@@ -564,44 +596,15 @@
     {name: "Resource Packs", icon: FolderHeart},
     {name: "API", icon: Gamepad2},
   ];
-
-  function handleModClick(mod: Mod) {
-    currentModView.set(mod);
-  }
-
-  let showSearch: boolean = false;
-  $currentCategory = "All Mods";
-
-  $: showSearch = $currentCategory === "Search";
-
-  $: filteredMods = $modsStore.filter(mod => {
-    switch ($currentCategory) {
-      case "Content":
-        return (
-          mod.categories.includes(Category.Content) ||
-          mod.categories.some(cat => cat === 0) || // Assuming Content is enum value 0
-          mod.title.toLowerCase().includes("content") ||
-          (typeof mod.description === "string" && mod.description.toLowerCase().includes("new content"))
-        );
-      case "Joker":
-        return mod.categories.includes(Category.Joker) || mod.categories.some(cat => cat === 1);
-      case "Quality of Life":
-        return mod.categories.includes(Category.QualityOfLife) || mod.categories.some(cat => cat === 2);
-      case "Technical":
-        return mod.categories.includes(Category.Technical) || mod.categories.some(cat => cat === 3);
-      case "Resource Packs":
-        return mod.categories.includes(Category.ResourcePacks) || mod.categories.some(cat => cat === 5);
-      case "API":
-        return mod.categories.includes(Category.API) || mod.categories.some(cat => cat === 6);
-      case "Miscellaneous":
-        return mod.categories.includes(Category.Miscellaneous) || mod.categories.some(cat => cat === 4);
-      case "Installed Mods":
-        return Boolean($installationStatus[mod.title]);
-      default:
-        return true;
-    }
-  });
-
+  $: filteredIndices = (() => {
+    const c = Category[$currentCategory.replace(/\s/g, "") as keyof typeof Category];
+    if (!c) return $modsStore.map((_, i) => i);
+    return $modsStore
+      .map((m, i) => {
+        if (m.categories.has(c)) return i;
+      })
+      .filter(Boolean);
+  })();
   function handleCategoryClick(category: string) {
     currentPage.set(1);
     startPage = 1; // Reset sliding window
@@ -628,14 +631,17 @@
     }
   }
 
+  // eslint-disable-next-line svelte/no-reactive-functions
   $: fetchThumbnails = async () => {
     const offset = ($currentPage - 1) * $itemsPerPage;
     await invoke("fetch_thumbnails_page", {offset, count: $itemsPerPage});
 
-    const mods = await invoke<Array<Mod>>("get_mod_list");
+    const mods = await tauri.get_mod_list();
 
     const next = offset + $itemsPerPage;
     for (let n = offset; n < next; n++) {
+      if (!mods[n]) continue;
+      // @ts-expect-error typescript goof?
       mods[n].image ||= "images/cover.jpg";
     }
 
@@ -646,8 +652,12 @@
     if (!isLoading) fetchThumbnails();
   }
 
-  $: totalPages = Math.ceil(filteredMods.length / $itemsPerPage);
-  $: paginatedMods = filteredMods.slice(($currentPage - 1) * $itemsPerPage, $currentPage * $itemsPerPage);
+  $: totalPages = Math.ceil(filteredIndices.length / $itemsPerPage);
+  $: paginatedIndices = filteredIndices.slice(
+    ($currentPage - 1) * $itemsPerPage,
+    $currentPage * $itemsPerPage,
+  );
+  $: paginatedMods = paginatedIndices.map(i => $modsStore[i]).filter(Boolean);
 
   const maxVisiblePages = 5;
   let startPage = 1;
@@ -721,7 +731,10 @@
       const modsFolderPath: string = await invoke("get_mods_folder");
 
       // Get the parent directory (config_dir/Balatro) by finding the last path separator
-      const lastSeparatorIndex = Math.max(modsFolderPath.lastIndexOf("/"), modsFolderPath.lastIndexOf("\\"));
+      const lastSeparatorIndex = Math.max(
+        modsFolderPath.lastIndexOf("/"),
+        modsFolderPath.lastIndexOf("\\"),
+      );
       if (lastSeparatorIndex === -1) {
         addMessage("Failed to determine the parent directory of the repository path.", "error");
         return;
@@ -753,7 +766,11 @@
   }
 
   $: {
-    if ($modEnabledStore && Object.keys($modEnabledStore).length > 0 && $currentCategory === "Installed Mods") {
+    if (
+      $modEnabledStore &&
+      Object.keys($modEnabledStore).length > 0 &&
+      $currentCategory === "Installed Mods"
+    ) {
       updateEnabledDisabledLists();
     }
   }
@@ -762,8 +779,11 @@
 <div class="container default-scrollbar">
   <div class="mods-container">
     <div class="categories">
-      {#each categories as category}
-        <button class:active={$currentCategory === category.name} onclick={() => handleCategoryClick(category.name)}>
+      {#each categories as category (category.name)}
+        <button
+          class:active={$currentCategory === category.name}
+          onclick={() => handleCategoryClick(category.name)}
+        >
           <svelte:component this={category.icon} size={16} />
           {category.name}
         </button>
@@ -809,7 +829,10 @@
             <button onclick={previousPage} disabled={$currentPage === 1}>Previous</button>
             {#each Array(Math.min(maxVisiblePages, totalPages)) as _, i}
               {#if startPage + i <= totalPages}
-                <button class:active={$currentPage === startPage + i} onclick={() => goToPage(startPage + i)}>
+                <button
+                  class:active={$currentPage === startPage + i}
+                  onclick={() => goToPage(startPage + i)}
+                >
                   {startPage + i}
                 </button>
               {/if}
@@ -833,13 +856,17 @@
                   <h3>Local Mods</h3>
                   <p>These mods were installed manually (outside the mod manager)</p>
                 </div>
-                <button class="open-folder-button" onclick={openModsFolder} title="Open mods folder">
+                <button
+                  class="open-folder-button"
+                  onclick={openModsFolder}
+                  title="Open mods folder"
+                >
                   <Folder size={20} /> Open Mods Folder
                 </button>
               </div>
 
               <!-- Enabled Local Mods -->
-              {#if enabledLocalMods.length > 0}
+              {#if enabledLocalMods.length}
                 <div class="subsection-header enabled" class:top-margin={localMods.length === 0}>
                   <h4>Enabled Local Mods</h4>
                   <p>
@@ -847,14 +874,18 @@
                   </p>
                 </div>
                 <div class="mods-grid local-mods-grid">
-                  {#each enabledLocalMods as mod}
-                    <LocalModCard {mod} onUninstall={handleModUninstalled} onToggleEnabled={handleModToggled} />
+                  {#each enabledLocalMods as mod (`${mod.author}@${mod.name}`)}
+                    <LocalModCard
+                      {mod}
+                      onUninstall={handleModUninstalled}
+                      onToggleEnabled={handleModToggled}
+                    />
                   {/each}
                 </div>
               {/if}
 
               <!-- Disabled Local Mods -->
-              {#if disabledLocalMods.length > 0}
+              {#if disabledLocalMods.length}
                 <div class="subsection-header disabled" class:top-margin={localMods.length === 0}>
                   <h4>Disabled Local Mods</h4>
                   <p>
@@ -862,27 +893,41 @@
                   </p>
                 </div>
                 <div class="mods-grid local-mods-grid">
-                  {#each disabledLocalMods as mod}
-                    <LocalModCard {mod} onUninstall={handleModUninstalled} onToggleEnabled={handleModToggled} />
+                  {#each disabledLocalMods as mod (`${mod.author}@${mod.name}`)}
+                    <LocalModCard
+                      {mod}
+                      onUninstall={handleModUninstalled}
+                      onToggleEnabled={handleModToggled}
+                    />
                   {/each}
                 </div>
               {/if}
 
               <!-- Mod Manager Catalog Section Header -->
-              <div class="section-header">
-                <div class="section-header-content">
-                  <h3>Mod Manager Catalog</h3>
-                  <p>These mods are available from the online catalog</p>
+              {#if paginatedIndices.length}
+                <div class="section-header">
+                  <div class="section-header-content">
+                    <h3>Mod Manager Catalog</h3>
+                    <p>These mods are available from the online catalog</p>
+                  </div>
+                  <button
+                    class="open-folder-button"
+                    onclick={openModsFolder}
+                    title="Open mods folder"
+                  >
+                    <Folder size={20} /> Open Mods Folder
+                  </button>
                 </div>
-                <button class="open-folder-button" onclick={openModsFolder} title="Open mods folder">
-                  <Folder size={20} /> Open Mods Folder
-                </button>
-              </div>
-            {:else if !isLoadingLocalMods && localMods.length === 0 && paginatedMods.length === 0}
+              {/if}
+            {:else if !isLoadingLocalMods && localMods.length === 0 && paginatedIndices.length === 0}
               <div class="no-mods-message">
                 <p>No installed mods.</p>
                 <div class="no-mods-buttons">
-                  <button class="open-folder-button" onclick={openModsFolder} title="Open mods folder">
+                  <button
+                    class="open-folder-button"
+                    onclick={openModsFolder}
+                    title="Open mods folder"
+                  >
                     <Folder size={20} /> Open Mods Folder
                   </button>
                 </div>
@@ -890,9 +935,9 @@
             {/if}
 
             <!-- Only proceed with catalog enabled/disabled sections if there are mods to show -->
-            {#if paginatedMods.length > 0}
+            {#if paginatedIndices.length > 0}
               <!-- Enabled Catalog Mods -->
-              {#if enabledMods.length > 0}
+              {#if enabledMods.length}
                 <div class="subsection-header enabled">
                   <h4>Enabled Catalog Mods</h4>
                   <p>
@@ -900,7 +945,7 @@
                   </p>
                 </div>
                 <div class="mods-grid" class:has-local-mods={localMods.length > 0}>
-                  {#each enabledMods as mod}
+                  {#each enabledMods as mod (`${mod.publisher}@${mod.title}`)}
                     <ModCard
                       {mod}
                       onmodclick={handleModClick}
@@ -913,7 +958,7 @@
               {/if}
 
               <!-- Disabled Catalog Mods -->
-              {#if disabledMods.length > 0}
+              {#if disabledMods.length}
                 <div class="subsection-header disabled">
                   <h4>Disabled Catalog Mods</h4>
                   <p>
@@ -921,7 +966,7 @@
                   </p>
                 </div>
                 <div class="mods-grid" class:has-local-mods={localMods.length > 0}>
-                  {#each disabledMods as mod}
+                  {#each disabledMods as mod (`${mod.publisher}@${mod.title}`)}
                     <ModCard
                       {mod}
                       onmodclick={handleModClick}
@@ -936,7 +981,7 @@
           {:else}
             <!-- Original non-InstalledMods categories -->
             <div class="mods-grid">
-              {#each paginatedMods as mod}
+              {#each paginatedMods as mod (`${mod.publisher}@${mod.title}`)}
                 <ModCard
                   {mod}
                   onmodclick={handleModClick}
