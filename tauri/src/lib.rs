@@ -1289,29 +1289,71 @@ async fn launch_balatro(state: tauri::State<'_, AppState<'_>>) -> Result<(), Str
 
     #[cfg(target_os = "linux")]
     {
-        let exe_path = find_executable_in_directory(&path)
-            .ok_or_else(|| format!("No executable found in {}", path.display()))
-            .inspect_err(|e| log::error!("{e}"))?;
+        const BALATRO_STEAMID: &str = "2379780";
 
         if !path.join("version.dll").exists() {
-            lovely::ensure_version_dll_exists(&path).await?;
+            lovely::ensure_version_dll_exists(&path)
+                .await
+                .inspect_err(|_| log::error!("Failed to install `lovely`"))?;
         }
 
-        let mut command = Command::new(&exe_path);
+        if let Ok(steam_exe) = which::which("steam") {
+            let mut command = Command::new(steam_exe);
+
+            command.args(if lovely_console_enabled {
+                vec!["-applaunch", BALATRO_STEAMID]
+            } else {
+                vec!["-applaunch", BALATRO_STEAMID, "--", "--disable-console"]
+            });
+
+            if command.spawn().is_ok() {
+                log::debug!("Launched Balatro through Steam executable");
+                return Ok(());
+            }
+        }
+
+        let url_handler = Command::new("xdg-mime")
+            .args(["query", "default", "x-scheme-handler/steam"])
+            .output()
+            .map_err(|e| format!("Failed to query `steam://` handler: {e}"))
+            .and_then(|output| {
+                let output = String::from_utf8_lossy(&output.stdout);
+                if output.trim().is_empty() {
+                    return Err("No default `steam://` handler found".to_string());
+                }
+                if output.trim() != "steam.desktop" {
+                    log::warn!(
+                        "The system's default `steam://` handler is {output} instead of steam"
+                    );
+                }
+                Ok(())
+            });
+        if url_handler.is_ok()
+            && Command::new("xdg-open")
+                .arg(format!("steam://run/{BALATRO_STEAMID}"))
+                .spawn()
+                .is_ok()
+        {
+            log::debug!("launched balatro through steam url protocol");
+            return Ok(());
+        }
+
+        let balatro_exe = find_executable_in_directory(&path)
+            .ok_or_else(|| format!("No executable found in {}", path.display()))
+            .inspect_err(|e| log::error!("{e}"))?;
+        let mut command = Command::new(&balatro_exe);
         command
             .current_dir(&path)
             .env("WINEDLLOVERRIDES", "version=n,b");
-
         if !lovely_console_enabled {
             command.arg("--disable-console");
         }
 
-        log::debug!("attempting to launch {}", exe_path.display());
+        log::debug!("attempting to launch {}", balatro_exe.display());
         command
             .spawn()
-            .map_err(|e| format!("Failed to launch {}: {}", exe_path.display(), e))?;
-
-        log::debug!("Launched Balatro directly with WINEDLLOVERRIDES");
+            .map_err(|e| format!("failed to launch {}: {}", balatro_exe.display(), e))?;
+        log::debug!("launched Balatro.exe directly with WINEDLLOVERRIDES");
     }
 
     Ok(())
