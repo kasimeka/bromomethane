@@ -28,13 +28,14 @@ CODE_OF_CONDUCT.md
 LICENSE
 README.md
 Taskfile.yml
+justfile
+eslint.config.js
+.prettierrc
 flake.nix
 flake.lock
 shell.nix
 default.nix
 /result
-/scripts/pnpm-lock.yaml
 /scripts/linux/bundle.sh
 /scripts/linux/pkgbuild
-/scripts/
 /version_updater/

@@ -5,6 +5,8 @@ all notable changes to this project will be documented in this file. the format 
 
 ## [unreleased]
 
+## [0.2.0] - 2025-06-27
+
 ### changed
 
 - `ModCard` & `ModView`: don't crop or zoom into thumbnails if they don't match the 16:9 aspect ratio
