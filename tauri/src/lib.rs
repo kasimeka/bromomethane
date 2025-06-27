@@ -197,31 +197,6 @@ async fn init_index(state: tauri::State<'_, AppState<'_, '_>>) -> Result<(), Str
     Ok(())
 }
 #[tauri::command]
-async fn fetch_thumbnails_page(
-    state: tauri::State<'_, AppState<'_, '_>>,
-    offset: usize,
-    count: usize,
-) -> Result<(), String> {
-    log::info!("by page: infinite re-renders?");
-    if std::env::var("BMM_NO_THUMBNAILS").is_ok() {
-        return Ok(());
-    }
-
-    let mut index = state
-        .manager
-        .read()
-        .map_err(|e| e.to_string())?
-        .index
-        .clone();
-    index
-        .mut_fetch_blobs(&state.reqwest, CONCURRENCY_FACTOR, offset, count, false)
-        .await?;
-
-    let mut mng = state.manager.write().map_err(|e| e.to_string())?;
-    mng.index = index;
-    Ok(())
-}
-#[tauri::command]
 async fn fetch_thumbnails_by_indices(
     state: tauri::State<'_, AppState<'_, '_>>,
     indices: Vec<usize>,
@@ -230,6 +205,7 @@ async fn fetch_thumbnails_by_indices(
     if std::env::var("BMM_NO_THUMBNAILS").is_ok() {
         return Ok(());
     }
+
     let mut index = state
         .manager
         .read()
@@ -237,17 +213,46 @@ async fn fetch_thumbnails_by_indices(
         .index
         .clone();
 
-    let mut blobs = index.mods.iter_mut().map(|(_, m)| m.thumbnail.as_mut());
-    let mut thumbnails = Vec::new();
-    for i in &indices {
-        if let Some(Some(t)) = blobs.nth(*i) {
-            thumbnails.push(t);
+    let thumbnails = &mut index
+        .mods
+        .iter_mut()
+        .enumerate()
+        .filter_map(|(i, (_, m))| {
+            if indices.contains(&i) {
+                m.thumbnail.as_mut()
+            } else {
+                None
+            }
+        })
+        .collect::<Vec<_>>();
+    lfs::mut_fetch_blobs(thumbnails, &state.reqwest, CONCURRENCY_FACTOR).await;
+
+    #[cfg(debug_assertions)]
+    for blob in thumbnails {
+        if let Err(e) = blob.data.as_mut() {
+            log::debug!("failed to fetch thumbnail: {e}");
+        } else {
+            log::debug!(
+                "fetched thumbnail of size {}",
+                blob.data.as_ref().map_or(0, |d| d.len())
+            );
         }
     }
-    lfs::mut_fetch_blobs(&mut thumbnails, &state.reqwest, CONCURRENCY_FACTOR).await;
+    #[cfg(debug_assertions)]
+    for i in &indices {
+        if let Some((id, m)) = index.mods.get_mut(*i) {
+            if let Some(blob) = m.thumbnail.as_ref() {
+                log::debug!(
+                    "mod {id} has thumbnail of size {}",
+                    blob.data.as_ref().map_or(0, |d| d.len())
+                );
+            }
+        }
+    }
 
     let mut mng = state.manager.write().map_err(|e| e.to_string())?;
     mng.index = index;
+
     Ok(())
 }
 
@@ -318,7 +323,7 @@ async fn get_mod_list(
     state: tauri::State<'_, AppState<'_, '_>>,
 ) -> Result<Vec<cache::Mod>, String> {
     // TODO: load cache here? or maybe unify the schema across the tauri boundary
-    let mods = state
+    Ok(state
         .manager
         .read()
         .map_err(|e| e.to_string())?
@@ -352,9 +357,7 @@ async fn get_mod_list(
             installed: false,
             last_updated: m.meta.last_updated.unwrap_or(0),
         })
-        .collect::<Vec<_>>();
-    map_error(cache::save_cache(&mods))?;
-    Ok(mods)
+        .collect::<Vec<_>>())
 }
 
 #[tauri::command]
@@ -2234,7 +2237,6 @@ pub fn run() {
             clone_repo,
             delete_manual_mod,
             exit_application,
-            fetch_thumbnails_page,
             fetch_thumbnails_by_indices,
             find_steam_balatro,
             force_remove_mod,
