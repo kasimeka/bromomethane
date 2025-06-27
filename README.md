@@ -13,6 +13,8 @@ to add your mods to bromomethane or BMM, follow the instructions at [the Balatro
 
 ## notable changes from BMM
 
+bromomethane is being developed independently from BMM, so all the content of [CHANGELOG.md](./CHANGELOG.md) should be assumed unique to bromomethane. the following is the list of changes i originally forked BMM for:
+
 - mod thumbnails are lazily loaded after mod cards are rendered in the UI, unlike BMM which makes you wait for everything in the index to download before any usable interface is shown
 - mods are sorted by last updated instead of alphabetical
 - all of the three caching layers are unused and will eventually be replaced
@@ -20,3 +22,4 @@ to add your mods to bromomethane or BMM, follow the instructions at [the Balatro
 - the frontend dev server is run on node with pnpm instead of bun
 - a good bunch of rust lints are enforced, and stricter code quality checks will be added for the FE
 - linux support is considered first class and resides in the main branch
+
