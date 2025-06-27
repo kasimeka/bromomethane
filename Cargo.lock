@@ -569,6 +569,7 @@ dependencies = [
  "balatro_mod_index",
  "base64 0.22.1",
  "bmm-lib",
+ "bytes",
  "dirs",
  "fix-path-env",
  "flate2",
