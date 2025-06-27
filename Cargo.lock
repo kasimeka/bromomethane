@@ -573,6 +573,7 @@ dependencies = [
  "fix-path-env",
  "flate2",
  "log",
+ "lovely_mod_manager",
  "mockito",
  "open",
  "predicates",
@@ -2865,6 +2866,19 @@ name = "log"
 version = "0.4.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "13dc2df351e3202783a1fe0d44375f7295ffb4049267b0f3018346dc122a1d94"
+
+[[package]]
+name = "lovely_mod_manager"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5190a32396c6d6d4d6f59f91e93ae3ecd554bee1bd3bb57e944739a448242aa6"
+dependencies = [
+ "balatro_mod_index",
+ "dirs",
+ "log",
+ "reqwest",
+ "zip",
+]
 
 [[package]]
 name = "mac"
