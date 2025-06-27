@@ -3,7 +3,6 @@
 PKGBUILD_DIR=$(mktemp -d)
 trap 'rm -rf "$PKGBUILD_DIR"' EXIT
 
-# shellcheck disable=SC2015
 [ -d "$PKGBUILD_DIR" ] && cd "$PKGBUILD_DIR" || {
   echo "failed to initialize temporary directory"
   exit 1
@@ -12,7 +11,7 @@ trap 'rm -rf "$PKGBUILD_DIR"' EXIT
 cat <<'EOF' > PKGBUILD
 # Maintainer: kasimeka
 pkgname=bromomethane
-pkgver=0.1.0
+pkgver=0.2.0
 pkgrel=1
 pkgdesc="A mod manager for Balatro - easily install and manage mods for the popular roguelike deckbuilding game. (none)"
 arch=('x86_64')
@@ -22,8 +21,8 @@ groups=()
 depends=('cairo' 'desktop-file-utils' 'gdk-pixbuf2' 'glib2' 'gtk3' 'hicolor-icon-theme' 'libsoup3' 'openssl' 'pango' 'webkit2gtk-4.1')
 options=('!strip' '!emptydirs')
 install=${pkgname}.install
-source_x86_64=("https://github.com/kasimeka/bromomethane/releases/download/v0.1.0/bromomethane_0.1.0_amd64.deb")
-sha512sums_x86_64=('c289ed71955a275d633520663b1256ed2d0a1e4fe9c3f33a7f27235cc066c4bbe6f68fc3081af3cea58f23b533e7dff3d24c90e6adcc4a19d077de1e2aab38bf')
+source_x86_64=("https://github.com/kasimeka/bromomethane/releases/download/v0.2.0/bromomethane_0.2.0_amd64.deb")
+sha512sums_x86_64=('298d22d26ab783a7e819e6d534d693d22823b3eca8bf3464d6e61dc1e4da0a5d3383ddc92ff5398a9fb2446226f6829ebd32391da2b7e5b5810ae2c8a836b203')
 
 package(){
 	tar -xz -f data.tar.gz -C "${pkgdir}"

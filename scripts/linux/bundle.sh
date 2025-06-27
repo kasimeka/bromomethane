@@ -11,7 +11,7 @@ docker run --rm -v "${OUTDIR}:/output" bromomethane:trash bash -c 'cp /app/bundl
 
 DEB="$(ls -1t "$OUTDIR/"*.deb | head -n1)"
 
-VERSION="$(jq -r '.version' package.json)"
+VERSION="$(jq -r '.version' tauri/tauri.conf.json)"
 SHA512SUM="$(sha512sum "$DEB" | cut -d' ' -f1)"
 
 sed \

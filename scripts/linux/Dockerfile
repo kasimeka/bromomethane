@@ -25,7 +25,8 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY . .
 RUN \
-    --mount=type=cache,target=/app/src/target/ \
+    --mount=type=cache,target=target \
+    --mount=type=cache,target=.svelte-kit \
     --mount=type=cache,target=/root/.cargo/registry/cache/git/db \
     --mount=type=cache,target=/root/.cargo/registry/cache/registry/ \
   pnpm tauri build --target x86_64-unknown-linux-gnu --verbose && \
