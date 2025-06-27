@@ -31,7 +31,6 @@ use balatro_mod_index::{forge, lfs, mods::ModIndex};
 use lovely_mod_manager::{Game, ModManager};
 
 use bmm_lib::{
-    balamod::find_balatros,
     cache,
     database::{Database, InstalledMod},
     errors::AppError,
@@ -1217,6 +1216,30 @@ async fn check_mod_installation(mod_type: String) -> Result<bool, String> {
     }
 }
 
+fn is_valid_game_dir(game_dir: &Path) -> bool {
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
+    let exe = PathBuf::from(&game_dir).join("Balatro.exe");
+
+    #[cfg(target_os = "macos")]
+    let exe = PathBuf::from(&game_dir).join("Balatro.app/Contents/Resources/Balatro.love");
+
+    #[cfg(any(target_os = "linux", target_os = "macos"))]
+    return exe.exists();
+
+    #[cfg(target_os = "windows")]
+    {
+        let dll_files = ["love.dll", "lua51.dll", "SDL2.dll"];
+        // TODO: lint on windows and confirm the clone is unnecessary
+        let dir = game_dir.clone();
+
+        for dll in dll_files.iter() {
+            if game_dir.join(dll).exists() {
+                return true;
+            }
+        }
+        false
+    }
+}
 #[tauri::command]
 async fn check_existing_installation(
     state: tauri::State<'_, AppState<'_, '_>>,
@@ -1225,12 +1248,10 @@ async fn check_existing_installation(
         .db
         .lock()
         .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
-    if let Some(path) = db.get_installation_path()? {
-        let path_buf = PathBuf::from(&path);
-        if bmm_lib::balamod::Balatro::from_custom_path(path_buf).is_some() {
-            Ok(Some(path))
+    if let Some(game_dir) = db.get_installation_path()? {
+        if is_valid_game_dir(&PathBuf::from(&game_dir)) {
+            Ok(Some(game_dir))
         } else {
-            map_error(db.remove_installation_path())?;
             Ok(None)
         }
     } else {
@@ -1524,18 +1545,21 @@ async fn set_balatro_path(
 }
 
 #[tauri::command]
+// TODO: ??????????????????????????????????????????????
 async fn find_steam_balatro(
     state: tauri::State<'_, AppState<'_, '_>>,
 ) -> Result<Vec<String>, String> {
-    let balatros = find_balatros();
+    let balatros = bmm_lib::finder::get_balatro_paths()
+        .into_iter()
+        .filter_map(|p| is_valid_game_dir(&p).then_some(p))
+        .collect::<Vec<_>>();
     if let Some(path) = balatros.first() {
         let db = state.db.lock().map_err(|e| e.to_string())?;
-        map_error(db.set_installation_path(&path.path.to_string_lossy()))?;
+        map_error(db.set_installation_path(&path.to_string_lossy()))?;
     }
-
     Ok(balatros
         .iter()
-        .map(|b| b.path.to_string_lossy().into_owned())
+        .map(|p| p.to_string_lossy().into_owned())
         .collect())
 }
 
@@ -1870,13 +1894,11 @@ async fn check_custom_balatro(
         path.clone()
     };
 
-    let is_valid = bmm_lib::balamod::Balatro::from_custom_path(path_to_check.clone()).is_some();
-
+    let is_valid = is_valid_game_dir(&path_to_check);
     if is_valid {
         let db = state.db.lock().map_err(|e| e.to_string())?;
         map_error(db.set_installation_path(&path_to_check.to_string_lossy()))?;
     }
-
     Ok(is_valid)
 }
 

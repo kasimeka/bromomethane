@@ -1,5 +1,5 @@
 use crate::finder::get_lovely_mods_dir;
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use log::info;
 use reqwest::header::{HeaderMap, HeaderValue, USER_AGENT};
 use serde::{Deserialize, Serialize};
@@ -39,19 +39,6 @@ impl ModType {
         match self {
             ModType::Steamodded => "Steamodded/smods",
             ModType::Talisman => "MathIsFun0/Talisman",
-        }
-    }
-
-    pub async fn check_installation(&self, installation_path: Option<&String>) -> bool {
-        match self {
-            ModType::Steamodded => {
-                let installer = ModInstaller::new(installation_path, ModType::Steamodded);
-                installer.is_installed()
-            }
-            ModType::Talisman => {
-                let installer = ModInstaller::new(installation_path, ModType::Talisman);
-                installer.is_installed()
-            }
         }
     }
 }

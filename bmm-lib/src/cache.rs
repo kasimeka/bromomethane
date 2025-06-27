@@ -157,18 +157,16 @@ pub fn save_versions_cache(mod_type: &str, versions: &[String]) -> Result<(), Ap
 
     // Use bincode 2.0 for serialization
     let config = bincode::config::standard();
-    let encoded =
+    let bytes =
         bincode::serde::encode_to_vec(&cache, config).map_err(|e| AppError::Serialization {
             format: "bincode".into(),
             source: e.to_string(),
         })?;
 
-    encoder
-        .write_all(&encoded)
-        .map_err(|e| AppError::FileWrite {
-            path,
-            source: e.to_string(),
-        })?;
+    encoder.write_all(&bytes).map_err(|e| AppError::FileWrite {
+        path,
+        source: e.to_string(),
+    })?;
 
     Ok(())
 }
@@ -265,18 +263,16 @@ pub fn save_cache(mods: &[Mod]) -> Result<(), AppError> {
 
     // Use bincode 2.0 for serialization
     let config = bincode::config::standard();
-    let encoded =
+    let bytes =
         bincode::serde::encode_to_vec(&cache, config).map_err(|e| AppError::Serialization {
             format: "bincode".into(),
             source: e.to_string(),
         })?;
 
-    encoder
-        .write_all(&encoded)
-        .map_err(|e| AppError::FileWrite {
-            path,
-            source: e.to_string(),
-        })?;
+    encoder.write_all(&bytes).map_err(|e| AppError::FileWrite {
+        path,
+        source: e.to_string(),
+    })?;
 
     Ok(())
 }

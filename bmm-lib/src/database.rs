@@ -1,4 +1,3 @@
-// use crate::cache::Mod;
 use crate::errors::AppError;
 use rusqlite::Connection;
 use serde::Serialize;

@@ -1,47 +1,48 @@
 use crate::errors::AppError;
-#[cfg(any(target_os = "windows", target_os = "linux"))]
+
 use std::fs::File;
-#[cfg(target_os = "macos")]
-use std::fs::{self, File};
-#[cfg(target_os = "macos")]
-use std::os::unix::fs::PermissionsExt;
-#[cfg(target_os = "macos")]
-use std::path::Path;
+
 use std::path::PathBuf;
 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
-pub async fn ensure_version_dll_exists(game_path: &PathBuf) -> Result<Option<PathBuf>, AppError> {
+pub async fn ensure_version_dll_exists(
+    game_path: &std::path::Path,
+) -> Result<Option<PathBuf>, AppError> {
+    use std::fs::File;
+
     let dll_path = game_path.join("version.dll");
 
-    // If the DLL doesn't exist, download it
-    if !dll_path.exists() {
-        let mut outfile = match File::create(&dll_path) {
-            Ok(f) => f,
-            Err(e) => {
-                #[cfg(target_os = "linux")]
-                if let Some(errno) = e.raw_os_error() {
-                    if errno == /* (30) - Read-only filesystem */ libc::EROFS
-                        || errno == /* (13) - Permission denied */ libc::EACCES
-                    {
-                        log::error!(
-                            "Failed to create file '{}', path not writable ({}). This error will be ignored and you have to manually install lovely instead.",
-                            dll_path.display(),
-                            errno,
-                        );
-                        return Ok(None);
-                    }
-                }
-                return Err(AppError::FileWrite {
-                    path: dll_path.clone(),
-                    source: e.to_string(),
-                })
-                .inspect_err(|e| {
-                    log::error!("Failed to create file '{}': {}", dll_path.display(), e);
-                });
-            }
-        };
-        download_version_dll(&mut outfile).await?;
+    if dll_path.exists() {
+        return Ok(Some(dll_path));
     }
+    // if the dll doesn't exist, download it
+
+    let mut outfile = match File::create(&dll_path) {
+        Ok(f) => f,
+        Err(e) => {
+            #[cfg(target_os = "linux")]
+            if let Some(errno) = e.raw_os_error() {
+                if errno == /* (30) - Read-only filesystem */ libc::EROFS
+                    || errno == /* (13) - Permission denied */ libc::EACCES
+                {
+                    log::error!(
+                        "Failed to create file '{}', path not writable ({}). This error will be ignored and you have to manually install lovely instead.",
+                        dll_path.display(),
+                        errno,
+                    );
+                    return Ok(None);
+                }
+            }
+            return Err(AppError::FileWrite {
+                path: dll_path.clone(),
+                source: e.to_string(),
+            })
+            .inspect_err(|e| {
+                log::error!("Failed to create file '{}': {}", dll_path.display(), e);
+            });
+        }
+    };
+    download_version_dll(&mut outfile).await?;
 
     Ok(Some(dll_path))
 }
@@ -100,6 +101,8 @@ fn detect_architecture() -> Result<&'static str, AppError> {
 pub async fn ensure_lovely_exists() -> Result<PathBuf, AppError> {
     #[cfg(target_os = "macos")]
     {
+        use std::fs;
+
         let config_dir = dirs::config_dir()
             .ok_or_else(|| AppError::DirNotFound(PathBuf::from("config directory")))?;
 
@@ -157,6 +160,8 @@ pub async fn ensure_lovely_exists() -> Result<PathBuf, AppError> {
 
 #[cfg(target_os = "macos")]
 async fn download_and_install_lovely(target_path: &Path) -> Result<(), AppError> {
+    use std::{fs, os::unix::fs::PermissionsExt};
+
     let temp_dir = tempfile::tempdir().map_err(|e| AppError::FileWrite {
         path: PathBuf::from("temp directory"),
         source: e.to_string(),

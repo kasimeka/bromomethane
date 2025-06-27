@@ -11,7 +11,8 @@ pub struct ModCollection {
 }
 
 impl ModCollection {
-    #[must_use] pub fn new(name: String, path: PathBuf) -> Self {
+    #[must_use]
+    pub fn new(name: String, path: PathBuf) -> Self {
         use std::hash::DefaultHasher;
         let mut hasher = DefaultHasher::new();
         name.hash(&mut hasher);
@@ -34,7 +35,8 @@ impl Default for ModCollectionManager {
 }
 
 impl ModCollectionManager {
-    #[must_use] pub fn new() -> Self {
+    #[must_use]
+    pub fn new() -> Self {
         Self {
             collections: HashMap::new(),
         }
@@ -52,7 +54,7 @@ impl ModCollectionManager {
         Ok(())
     }
 
-    pub fn add_collection(&mut self, conn: &Connection, collection: ModCollection) -> Result<()> {
+    pub fn add_collection(&mut self, conn: &Connection, collection: &ModCollection) -> Result<()> {
         self.collections.insert(collection.hash, collection.clone());
 
         conn.execute(
@@ -67,7 +69,8 @@ impl ModCollectionManager {
         Ok(())
     }
 
-    #[must_use] pub fn get_collection(&self, hash: u64) -> Option<&ModCollection> {
+    #[must_use]
+    pub fn get_collection(&self, hash: u64) -> Option<&ModCollection> {
         self.collections.get(&hash)
     }
 

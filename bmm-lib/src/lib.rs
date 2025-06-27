@@ -5,8 +5,8 @@
     clippy::correctness
 )]
 #![warn(clippy::perf, clippy::pedantic)]
+#![allow(clippy::missing_errors_doc)]
 
-pub mod balamod;
 pub mod cache;
 pub mod database;
 pub mod errors;

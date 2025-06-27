@@ -5,6 +5,13 @@ all notable changes to this project will be documented in this file. the format 
 
 ## [unreleased]
 
+### changed
+
+- resolved lint warnings in `bmm_lib`
+
+### removed
+
+- the entire balamod module :)
 
 ## [0.2.0] - 2025-06-27
 
