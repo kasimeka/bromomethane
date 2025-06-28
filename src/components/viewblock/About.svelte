@@ -5,11 +5,7 @@
 
   let showConfetti = false;
 
-  let buttonRect: DOMRect;
-
-  const handleKofiClick = async (event: MouseEvent) => {
-    const button = event.currentTarget as HTMLButtonElement;
-    buttonRect = button.getBoundingClientRect();
+  const handleKofiClick = async (_: MouseEvent) => {
     showConfetti = true;
     setTimeout(() => (showConfetti = false), 2000);
     try {
@@ -28,8 +24,9 @@
       <div>
         <h3>What is BMM?</h3>
         <p>
-          bromomethane is a tool designed to help you manage and install mods for the game Balatro. It provides an
-          easy-to-use interface for mod management while maintaining the game's unique aesthetic.
+          bromomethane is a tool designed to help you manage and install mods for the game Balatro.
+          It provides an easy-to-use interface for mod management while maintaining the game's
+          unique aesthetic.
         </p>
       </div>
 
@@ -44,7 +41,10 @@
       </div>
 
       <div class="button-container">
-        <button class="wiki-button" on:click={() => open("https://balatromods.miraheze.org/wiki/Main_Page")}>
+        <button
+          class="wiki-button"
+          on:click={() => open("https://balatromods.miraheze.org/wiki/Main_Page")}
+        >
           <BookOpen size={20} />
           <span>Visit Wiki</span>
         </button>
@@ -59,7 +59,7 @@
         </button>
       </div>
 
-      <p id="versiontext">Current version: v0.1.0</p>
+      <p id="versiontext">{`Current version: v${__APP_VERSION__}`}</p>
     </div>
 
     <div class="profile-section">

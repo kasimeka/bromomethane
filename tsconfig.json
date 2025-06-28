@@ -6,15 +6,15 @@
     // from the referenced tsconfig.json - TypeScript does not merge them in
     "extends": "./.svelte-kit/tsconfig.json",
     "compilerOptions": {
+        "include": [
+            "./src/vite-env.d.ts"
+        ],
         "esModuleInterop": true,
         "skipLibCheck": true,
         "allowJs": true,
-
         "sourceMap": true,
-
         "moduleDetection": "force",
         "resolveJsonModule": true,
-
         "forceConsistentCasingInFileNames": true,
         "strict": true,
         "noUncheckedIndexedAccess": true,

@@ -8,7 +8,6 @@
   import SecurityPopup from "../../components/SecurityPopup.svelte";
   import type {DependencyCheck, InstalledMod} from "../../stores/modStore";
   import {currentModView, modsStore} from "../../stores/modStore";
-  import {backgroundEnabled} from "../../stores/modStore";
   import {selectedModStore, dependentsStore} from "../../stores/modStore";
   import {installationStatus, showWarningPopup} from "../../stores/modStore";
   import {invoke} from "@tauri-apps/api/core";
@@ -44,7 +43,10 @@
   }
 
   // Modified to include security check
-  async function handleDependencyCheck(requirements: DependencyCheck, downloadAction?: () => Promise<void>) {
+  async function handleDependencyCheck(
+    requirements: DependencyCheck,
+    downloadAction?: () => Promise<void>,
+  ) {
     modRequirements = requirements;
     if (downloadAction) {
       originalDownloadAction = downloadAction;
@@ -106,11 +108,16 @@
 
   async function handleRefresh() {
     const installedMods: InstalledMod[] = await invoke("get_installed_mods_from_db");
-    installationStatus.set(Object.fromEntries(installedMods.map((mod: InstalledMod) => [mod.name, true])));
+    installationStatus.set(
+      Object.fromEntries(installedMods.map((mod: InstalledMod) => [mod.name, true])),
+    );
   }
 
   function showError(error: unknown) {
-    addMessage(`Uninstall failed: ${error instanceof Error ? error.message : String(error)}`, "error");
+    addMessage(
+      `Uninstall failed: ${error instanceof Error ? error.message : String(error)}`,
+      "error",
+    );
   }
 
   function onError(event: {detail: unknown}) {
@@ -170,15 +177,26 @@
       <LaunchButton />
     </div>
     <nav>
-      <button class:active={currentSection === "mods"} onclick={() => (currentSection = "mods")}> Mods </button>
-      <button class:active={currentSection === "settings"} onclick={() => (currentSection = "settings")}>
+      <button class:active={currentSection === "mods"} onclick={() => (currentSection = "mods")}>
+        Mods
+      </button>
+      <button
+        class:active={currentSection === "settings"}
+        onclick={() => (currentSection = "settings")}
+      >
         Settings
       </button>
-      <button class:active={currentSection === "about"} onclick={() => (currentSection = "about")}> About </button>
+      <button class:active={currentSection === "about"} onclick={() => (currentSection = "about")}>
+        About
+      </button>
     </nav>
   </header>
 
-  <div class="content" class:modal-open={!!$currentModView && currentSection == "mods"} bind:this={contentElement}>
+  <div
+    class="content"
+    class:modal-open={!!$currentModView && currentSection == "mods"}
+    bind:this={contentElement}
+  >
     {#if currentSection === "mods"}
       <Mods mod={null} {handleDependencyCheck} on:request_uninstall={handleRequestUninstall} />
     {/if}
@@ -223,7 +241,7 @@
     {onError}
   />
 
-  <div class="version-text">v0.1.0</div>
+  <div class="version-text">{`v${__APP_VERSION__}`}</div>
 </div>
 
 <style>

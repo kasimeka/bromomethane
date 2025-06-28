@@ -55,7 +55,7 @@
 <div class="app">
   <h1>Welcome to bromomethane</h1>
   <BalatroPicker />
-  <div class="version-text">v0.1.0</div>
+  <div class="version-text">{`v${__APP_VERSION__}`}</div>
 </div>
 
 <style>
