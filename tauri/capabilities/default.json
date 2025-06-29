@@ -6,23 +6,17 @@
         "main"
     ],
     "permissions": [
-        "shell:allow-open",
-        "shell:default",
+        "core:event:allow-listen",
+        "core:event:default",
+        "core:window:allow-set-focus",
+        "core:window:allow-show",
         "dialog:default",
+        "fs:create-app-specific-dirs",
         "fs:default",
         "fs:read-app-specific-dirs-recursive",
-        "fs:create-app-specific-dirs",
-        "core:event:allow-listen",
-        "core:event:default",
-        "core:window:allow-show",
-        "core:window:allow-set-focus",
-        "window-state:default",
-        "fs:create-app-specific-dirs",
-        "core:event:allow-listen",
-        "core:event:default",
-        "fs:create-app-specific-dirs",
-        "core:event:default",
-        "core:event:allow-listen"
+        "shell:allow-open",
+        "shell:default",
+        "window-state:default"
     ],
     "platforms": [
         "windows",
