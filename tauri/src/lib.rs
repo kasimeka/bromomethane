@@ -207,7 +207,6 @@ async fn fetch_thumbnails_by_indices(
     state: tauri::State<'_, AppState<'_, '_>>,
     indices: Vec<usize>,
 ) -> Result<(), String> {
-    log::debug!("by indices: infinite re-renders?");
     if std::env::var("BMM_NO_THUMBNAILS").is_ok() {
         return Ok(());
     }
@@ -232,29 +231,6 @@ async fn fetch_thumbnails_by_indices(
         })
         .collect::<Vec<_>>();
     lfs::mut_fetch_blobs(thumbnails, &state.reqwest, CONCURRENCY_FACTOR).await;
-
-    #[cfg(debug_assertions)]
-    for blob in thumbnails {
-        if let Err(e) = blob.data.as_mut() {
-            log::debug!("failed to fetch thumbnail: {e}");
-        } else {
-            log::debug!(
-                "fetched thumbnail of size {}",
-                blob.data.as_ref().map_or(0, bytes::Bytes::len)
-            );
-        }
-    }
-    #[cfg(debug_assertions)]
-    for i in &indices {
-        if let Some((id, m)) = index.mods.get_mut(*i) {
-            if let Some(blob) = m.thumbnail.as_ref() {
-                log::debug!(
-                    "mod {id} has thumbnail of size {}",
-                    blob.data.as_ref().map_or(0, bytes::Bytes::len)
-                );
-            }
-        }
-    }
 
     let mut mng = state.manager.write().map_err(|e| e.to_string())?;
     mng.index = index;
