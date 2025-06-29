@@ -37,6 +37,7 @@ all notable changes to this project will be documented in this file. the format 
 - `Mods` component:
   - thumbnails are lazily loaded after their cards are rendered in the UI, instead of waiting for the entire index to download before showing any usable UI
   - mods are sorted by last updated instead of alphabetical
+  - the search finds mods by name, author and description, not just name and author
 - all of the three caching layers are unused and will eventually be replaced
 - the frontend dev server is run on node with pnpm instead of bun
 - a good bunch of rust lints are enforced, and stricter code quality checks will be added for the FE
