@@ -5,13 +5,20 @@ all notable changes to this project will be documented in this file. the format 
 
 ## [unreleased]
 
-### changed
+### added
 
-- resolved lint warnings in `bmm_lib`
+- an update notification popup based on the latest github release tag
 
 ### removed
 
+- the security notice on first launch
 - the entire balamod module :)
+
+### changed
+
+- resolve lint warnings in `bmm_lib`
+- unify `package.json` and `Cargot.toml` as the source of truth on the project's version everywhere in js and rust respectively
+- nix devshell: fix no TLS capabilities in the webview
 
 ## [0.2.0] - 2025-06-27
 

@@ -104,7 +104,9 @@
           packages = with pkgs; lib.optionals stdenv.isLinux [xdg-utils];
           shellHook = with pkgs;
             lib.optionalString stdenv.hostPlatform.isLinux ''
-              export GSETTINGS_SCHEMA_DIR="${glib.getSchemaPath gtk3}"
+              export \
+                GSETTINGS_SCHEMA_DIR="${glib.getSchemaPath gtk3}" \
+                GIO_MODULE_DIR=${glib-networking}/lib/gio/modules
             '';
         };
         devShells.full = pkgs.mkShell {
