@@ -25,7 +25,7 @@ export default ts.config(
     },
   },
   {
-    files: ["**/*.svelte", "**/*.svelte.ts", "**/*.svelte.js"],
+    files: ["**/*.svelte", "**/*.ts", "**/*.js"],
     ignores: ["eslint.config.js", "svelte.config.js"],
     languageOptions: {
       parserOptions: {
@@ -36,7 +36,10 @@ export default ts.config(
       },
     },
     rules: {
-      "@typescript-eslint/no-unused-vars": ["error", {argsIgnorePattern: "^_", varsIgnorePattern: "^_"}],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
     },
   },
 );

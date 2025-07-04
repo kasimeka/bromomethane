@@ -1268,7 +1268,7 @@
     /*top: 0.05rem;*/
     left: 50%;
     transform: translateX(-50%);
-    z-index: 1000;
+    z-index: 500;
     background: #c14139;
     border: 2px solid #f4eee0;
     border-radius: 8px;

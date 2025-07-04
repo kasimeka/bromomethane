@@ -29,5 +29,8 @@ export default defineConfig(async () => ({
       ignored: ["**/tauri/**", "**/bmm-lib/**"],
     },
   },
-  define: {__APP_VERSION__: JSON.stringify(process.env.npm_package_version)},
+  define: {
+    __APP_REPO_SLUG__: JSON.stringify("kasimeka/bromomethane"),
+    __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+  },
 }));

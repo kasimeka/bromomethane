@@ -5,7 +5,7 @@
   import Settings from "../../components/viewblock/Settings.svelte";
   import RequiresPopup from "../../components/RequiresPopup.svelte";
   import WarningPopup from "../../components/WarningPopup.svelte";
-  import SecurityPopup from "../../components/SecurityPopup.svelte";
+  import UpdateNotificationPopup from "../../components/UpdateNotificationPopup.svelte";
   import type {DependencyCheck, InstalledMod} from "../../stores/modStore";
   import {currentModView, modsStore} from "../../stores/modStore";
   import {selectedModStore, dependentsStore} from "../../stores/modStore";
@@ -16,7 +16,7 @@
   import {onMount} from "svelte";
 
   let currentSection = $state("mods");
-  let showSecurityPopup = $state(false); // Control visibility of the security popup
+  let showUpdateNotification = $state(false); // Control visibility of the update notification popup
 
   $effect(() => {
     // Cleanup
@@ -29,63 +29,20 @@
   let showRequiresPopup = $state(false);
 
   let storedDownloadAction: (() => Promise<void>) | null = $state(null);
-  let originalDownloadAction: (() => Promise<void>) | null = $state(null);
 
-  // Function to check if security warning needs to be shown
-  async function checkSecurityAcknowledgment(): Promise<boolean> {
-    try {
-      const isAcknowledged = await invoke<boolean>("is_security_warning_acknowledged");
-      return isAcknowledged;
-    } catch (error) {
-      console.error("Failed to check security acknowledgment:", error);
-      return false; // If there's an error, show the popup anyway
-    }
-  }
-
-  // Modified to include security check
+  // Handle dependency check for mod installations
   async function handleDependencyCheck(
     requirements: DependencyCheck,
     downloadAction?: () => Promise<void>,
   ) {
     modRequirements = requirements;
     if (downloadAction) {
-      originalDownloadAction = downloadAction;
-
-      // Check if we need to show the security popup first
-      const isSecurityAcknowledged = await checkSecurityAcknowledgment();
-
-      if (!isSecurityAcknowledged) {
-        // Store the action but don't execute it yet - show security popup first
-        storedDownloadAction = null;
-        showSecurityPopup = true;
-      } else {
-        // Security already acknowledged, proceed with dependency check
-        storedDownloadAction = downloadAction;
-        showRequiresPopup = true;
-      }
+      storedDownloadAction = downloadAction;
+      showRequiresPopup = true;
     } else {
       console.warn("handleDependencyCheck called without a download action");
       storedDownloadAction = null;
-      originalDownloadAction = null;
     }
-  }
-
-  // Handle security acknowledgment
-  async function handleSecurityAcknowledge() {
-    showSecurityPopup = false;
-
-    // Now proceed with dependency check if there was an action
-    if (originalDownloadAction) {
-      storedDownloadAction = originalDownloadAction;
-      showRequiresPopup = true;
-    }
-  }
-
-  // Handle security cancellation
-  function handleSecurityCancel() {
-    showSecurityPopup = false;
-    storedDownloadAction = null;
-    originalDownloadAction = null;
   }
 
   function handleProceedDownload() {
@@ -98,7 +55,6 @@
       console.warn("Proceed action requested, but no download action was stored.");
     }
     storedDownloadAction = null; // Clear the stored action
-    originalDownloadAction = null; // Clear the original action too
   }
 
   let contentElement: HTMLDivElement;
@@ -155,18 +111,17 @@
     showUninstallDialog = true;
   }
 
+  let isAutoUpdateCheck = $state(false);
+
   onMount(async () => {
     handleRefresh();
 
-    // Check if we need to show the security popup on first launch
-    const isFirstLaunch = await invoke<boolean>("is_security_warning_acknowledged");
-    if (!isFirstLaunch) {
-      // It's the first launch, check if security is already acknowledged
-      const isSecurityAcknowledged = await checkSecurityAcknowledgment();
-      if (!isSecurityAcknowledged) {
-        showSecurityPopup = true;
-      }
-    }
+    // Automatically check for updates when the app starts
+    setTimeout(() => {
+      isAutoUpdateCheck = true;
+
+      showUpdateNotification = true;
+    }); // Small delay to let the app load first
   });
 </script>
 
@@ -206,7 +161,12 @@
     {/if}
 
     {#if currentSection === "about"}
-      <About />
+      <About
+        onCheckForUpdates={() => {
+          isAutoUpdateCheck = false;
+          showUpdateNotification = true;
+        }}
+      />
     {/if}
   </div>
 
@@ -225,11 +185,12 @@
     onCancel={$showWarningPopup.onCancel}
   />
 
-  <!-- Add the SecurityPopup component -->
-  <SecurityPopup
-    visible={showSecurityPopup}
-    onAcknowledge={handleSecurityAcknowledge}
-    onCancel={handleSecurityCancel}
+  <UpdateNotificationPopup
+    bind:visible={showUpdateNotification}
+    onDismiss={() => {
+      showUpdateNotification = false;
+    }}
+    isAutoCheck={isAutoUpdateCheck}
   />
 
   <UninstallDialog

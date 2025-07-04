@@ -8,6 +8,7 @@ all notable changes to this project will be documented in this file. the format 
 ### added
 
 - an update notification popup based on the latest github release tag
+  - popup can be dismissed by pressing `esc` or clicking outside it
 
 ### removed
 
