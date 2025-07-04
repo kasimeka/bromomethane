@@ -5,6 +5,8 @@ all notable changes to this project will be documented in this file. the format 
 
 ## [unreleased]
 
+## [0.3.0] - 2025-07-04
+
 ### added
 
 - an update notification popup based on the latest github release tag
