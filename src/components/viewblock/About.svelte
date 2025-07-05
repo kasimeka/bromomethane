@@ -2,40 +2,31 @@
   import {RefreshCw} from "lucide-svelte";
 
   let {onCheckForUpdates}: {onCheckForUpdates?: () => void} = $props();
+
+  const repoUrl = `https://github.com/${__APP_REPO_SLUG__}`;
 </script>
 
 <div class="container default-scrollbar">
   <div class="about-container">
     <div class="content">
-      <h2>About bromomethane</h2>
+      <h2>about bromomethane</h2>
 
-      <div>
-        <p>
-          bromomethane is a tool designed to help you manage and install mods for the game Balatro.
-          It provides an easy-to-use interface for mod management while maintaining the game's
-          unique aesthetic.
-        </p>
-      </div>
+      <p>
+        bromomethane is a tool to help you manage and install mods for the game Balatro, it also
+        installs lovely -the game's defacto standard mod loader & code injector- for you.
+      </p>
 
-      <div>
-        <h3>Features</h3>
-        <ul>
-          <li>Easy mod installation and management</li>
-          <li>Automatic game path detection</li>
-          <li>Mod compatibility checks</li>
-        </ul>
-      </div>
+      <p>
+        the project is fully open source and licenesed under gplv3, you can find its source code at
+        &lt;<a href={repoUrl} target="_blank" rel="noopener noreferrer">{repoUrl}</a>&gt;.
+      </p>
 
-      <div class="button-container">
-        {#if onCheckForUpdates}
-          <button class="update-button" onclick={onCheckForUpdates}>
-            <RefreshCw size={20} />
-            <span>Check for Updates</span>
-          </button>
-        {/if}
-      </div>
-
-      <p id="versiontext">{`Current version: v${__APP_VERSION__}`}</p>
+      {#if onCheckForUpdates}
+        <button class="update-button" onclick={onCheckForUpdates}>
+          <RefreshCw size={20} />
+          <span>check for updates</span>
+        </button>
+      {/if}
     </div>
   </div>
 </div>
@@ -77,6 +68,10 @@
     flex: 1;
   }
 
+  a {
+    color: #74cca8;
+  }
+
   .update-button {
     background-color: #56a786;
     border: 4px solid #f4eee0;
@@ -88,7 +83,7 @@
     cursor: pointer;
     transition: all 0.2s ease;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-    margin: 0;
+    margin-top: 1.5rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -110,52 +105,15 @@
     color: #fdcf51;
   }
 
-  h3 {
-    font-size: 1.8rem;
-    margin-bottom: 0.5rem;
-    color: #fdcf51;
-  }
-
+  div,
   p {
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     margin-bottom: 1rem;
   }
 
   #versiontext {
     color: #fde700;
     margin-top: 1rem;
-  }
-
-  ul {
-    list-style-type: disc;
-    margin-left: 1rem;
-    margin-bottom: 1rem;
-  }
-
-  li {
-    font-size: 1.2rem;
-    margin-bottom: 0.5rem;
-  }
-  .button-container {
-    display: flex;
-    gap: 1rem;
-    margin: 1rem 0;
-    flex-wrap: wrap;
-  }
-
-  @media (max-width: 1160px) {
-    p {
-      font-size: 1rem;
-    }
-    li {
-      font-size: 1rem;
-    }
-
-    h2 {
-      font-size: 2rem;
-    }
-    h3 {
-      font-size: 1.5rem;
-    }
+    font-size: 1.3rem;
   }
 </style>

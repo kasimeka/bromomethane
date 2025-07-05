@@ -76,8 +76,8 @@
         }
       }
     } catch (error) {
-      console.error("Failed to check for updates:", error);
-      errorMessage = "Failed to check for updates. Please try again later.";
+      console.error("failed to check for updates:", error);
+      errorMessage = "failed to check for updates. please try again later.";
     } finally {
       isLoading = false;
     }
@@ -106,7 +106,7 @@
   });
 
   function handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape' && visible) {
+    if (event.key === "Escape" && visible) {
       dismiss();
     }
   }
@@ -115,17 +115,31 @@
 <svelte:window on:keydown={handleKeydown} />
 
 {#if visible}
-  <div class="modal-background" role="button" tabindex="0" transition:fade={{duration: 100}} onclick={dismiss} onkeydown={handleKeydown}>
-    <div class="modal" role="dialog" tabindex="0" transition:scale={{duration: 200, start: 0.95, opacity: 1}} onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
+  <div
+    class="modal-background"
+    role="button"
+    tabindex="0"
+    transition:fade={{duration: 100}}
+    onclick={dismiss}
+    onkeydown={handleKeydown}
+  >
+    <div
+      class="modal"
+      role="dialog"
+      tabindex="0"
+      transition:scale={{duration: 200, start: 0.95, opacity: 1}}
+      onclick={e => e.stopPropagation()}
+      onkeydown={e => e.stopPropagation()}
+    >
       {#if isLoading}
-        <h2>Checking for Updates...</h2>
-        <p>Please wait while we check for the latest version.</p>
+        <h2>checking for updates...</h2>
+        <p>please wait while we check for the latest version.</p>
       {:else if errorMessage}
-        <h2>Update Check Failed</h2>
+        <h2>update check failed</h2>
         <p class="error-message">{errorMessage}</p>
         <div class="buttons">
-          <button class="cancel-button" onclick={dismiss}>Close</button>
-          <button class="confirm-button" onclick={checkForUpdates}>Try Again</button>
+          <button class="cancel-button" onclick={dismiss}>close</button>
+          <button class="confirm-button" onclick={checkForUpdates}>try again</button>
         </div>
       {:else if hasUpdate && release}
         <h2>update available!</h2>
@@ -160,7 +174,7 @@
         <div class="buttons">
           <button
             class="confirm-button"
-            onclick={() => open("https://github.com/kasimeka/bromomethane/releases/latest")}
+            onclick={() => open(`https://github.com/${__APP_REPO_SLUG__}/releases/latest`)}
             >open release page</button
           >
           <button
@@ -173,12 +187,12 @@
           <button class="cancel-button" onclick={dismiss}>dismiss</button>
         </div>
       {:else}
-        <h2>You're Up to Date!</h2>
-        <p>You have the latest version of Bromomethane.</p>
-        <p><strong>Current Version:</strong> v{__APP_VERSION__}</p>
+        <h2>you're up to date!</h2>
+        <p>you have the latest version of bromomethane.</p>
+        <p><strong>current version:</strong> v{__APP_VERSION__}</p>
 
         <div class="buttons">
-          <button class="confirm-button" onclick={dismiss}>Close</button>
+          <button class="confirm-button" onclick={dismiss}>close</button>
         </div>
       {/if}
     </div>
