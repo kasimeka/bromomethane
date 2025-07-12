@@ -3,19 +3,18 @@
   import {invoke} from "@tauri-apps/api/core";
   import {X} from "lucide-svelte";
 
-  export let show: boolean = false;
-  export let onClose: () => void;
+  let {vanilla = false, show = false, onClose /* = (_e: unknown) => {} */} = $props();
 
-  let disableLaunchButton = false;
-  let disableCheckButton = false;
+  let disableLaunchButton = $state(false);
+  let disableCheckButton = $state(false);
 
-  let isError: boolean = false;
+  let isError = $state(false);
 
   async function handleLaunch() {
     disableLaunchButton = true;
     disableCheckButton = true;
     try {
-      await invoke("launch_balatro");
+      await invoke("launch_balatro", {vanilla});
       onClose();
       return;
     } catch (error) {
@@ -37,7 +36,7 @@
           isError = false;
         }, 2000);
       } else {
-        await invoke("launch_balatro");
+        await invoke("launch_balatro", {vanilla});
         onClose();
         return;
       }
@@ -48,16 +47,18 @@
     }
   }
 
-  $: if (!show) {
-    disableLaunchButton = false;
-    disableCheckButton = false;
-  }
+  $effect(() => {
+    if (!show) {
+      disableLaunchButton = false;
+      disableCheckButton = false;
+    }
+  });
 </script>
 
 {#if show}
   <div class="overlay" transition:fade={{duration: 100}}>
     <div class="alert-box">
-      <button class="close-button" on:click={onClose} class:hidden={isError}>
+      <button class="close-button" onclick={onClose} class:hidden={isError}>
         <div class="close-icon-container">
           <X size={13} />
         </div>
@@ -65,14 +66,14 @@
       <div class="content" class:hidden={isError}>
         <h2 id="alert-title-first">Steam is not running. Are you sure?</h2>
         <div class="button-container">
-          <button class="launch-button" on:click={handleLaunch} disabled={disableLaunchButton}>
+          <button class="launch-button" onclick={handleLaunch} disabled={disableLaunchButton}>
             {#if disableLaunchButton}
               Launching...
             {:else}
               Yes, launch without Steam
             {/if}
           </button>
-          <button class="check-button" on:click={handleCheckAgain} disabled={disableCheckButton}>
+          <button class="check-button" onclick={handleCheckAgain} disabled={disableCheckButton}>
             {#if disableCheckButton}
               Checking...
             {:else}

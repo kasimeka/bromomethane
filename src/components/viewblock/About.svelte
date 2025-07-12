@@ -110,10 +110,4 @@
     font-size: 1.3rem;
     margin-bottom: 1rem;
   }
-
-  #versiontext {
-    color: #fde700;
-    margin-top: 1rem;
-    font-size: 1.3rem;
-  }
 </style>

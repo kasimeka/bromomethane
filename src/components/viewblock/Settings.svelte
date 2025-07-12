@@ -2,13 +2,10 @@
   import PathSelector from "../PathSelector.svelte";
   import {Settings2, RefreshCw, Folder} from "lucide-svelte";
   import {addMessage} from "$lib/stores";
-  import {onMount} from "svelte";
   import {invoke} from "@tauri-apps/api/core";
-  import {backgroundEnabled} from "../../stores/modStore";
 
   let isReindexing = false;
   let isClearingCache = false;
-  let isConsoleEnabled = false;
   let lastReindexStats = {
     removedFiles: 0,
     cleanedEntries: 0,
@@ -48,7 +45,10 @@
       const modsFolderPath: string = await invoke("get_mods_folder");
 
       // Get the parent directory (config_dir/Balatro) by finding the last path separator
-      const lastSeparatorIndex = Math.max(modsFolderPath.lastIndexOf("/"), modsFolderPath.lastIndexOf("\\"));
+      const lastSeparatorIndex = Math.max(
+        modsFolderPath.lastIndexOf("/"),
+        modsFolderPath.lastIndexOf("\\"),
+      );
       if (lastSeparatorIndex === -1) {
         addMessage("Failed to determine the parent directory of the repository path.", "error");
         return;
@@ -75,27 +75,6 @@
       addMessage(`Failed to open mods directory: ${error}`, "error");
     }
   }
-
-  async function handleConsoleChange() {
-    const newValue = !isConsoleEnabled;
-    try {
-      await invoke("set_lovely_console_status", {enabled: newValue});
-      isConsoleEnabled = newValue;
-      addMessage(`Lovely Console ${newValue ? "enabled" : "disabled"}`, "success");
-    } catch (error) {
-      console.error("Failed to set console status:", error);
-      addMessage("Failed to update Lovely Console status", "error");
-    }
-  }
-
-  onMount(async () => {
-    try {
-      isConsoleEnabled = await invoke("get_lovely_console_status");
-    } catch (error) {
-      console.error("Failed to get console status:", error);
-      addMessage("Error fetching Lovely Console status", "error");
-    }
-  });
 </script>
 
 <div class="container default-scrollbar">
@@ -155,17 +134,6 @@
           Performs consistency check on the mod database. Will only remove:
           <br />• Database entries for missing mod installations
         </p>
-      </div>
-
-      <h3>Developer Options</h3>
-      <div class="console-settings">
-        <span class="label-text">Enable Lovely Console</span>
-        <div class="switch-container">
-          <label class="switch">
-            <input type="checkbox" checked={isConsoleEnabled} on:change={handleConsoleChange} />
-            <span class="slider"></span>
-          </label>
-        </div>
       </div>
     </div>
   </div>
@@ -304,80 +272,6 @@
     opacity: 0.9;
     max-width: 400px;
     line-height: 1.4;
-  }
-  .console-settings {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-top: 1rem;
-    font-size: 1.2rem;
-    color: #f4eee0;
-  }
-  .label-text {
-    white-space: nowrap;
-  }
-
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 60px;
-    height: 32px;
-  }
-  .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0; /* Disabled state: red fill and border */
-    background-color: #f87171;
-    border: 2px solid #fc4747;
-    transition: 0.3s;
-    border-radius: 10px;
-  }
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 24px;
-    width: 24px;
-    left: 2px;
-    bottom: 2px;
-    background-color: #f4eee0;
-    /* do a gray outline */
-    outline: 2px solid #9e9a90;
-    transition: 0.3s;
-    border-radius: 5px;
-  } /* Enabled state: green fill and border */
-  .switch input:checked + .slider {
-    background-color: #4ade80;
-    border: 2px solid #2fba66;
-  }
-  .switch input:checked + .slider:before {
-    transform: translateX(28px);
-  }
-  @media (max-width: 1160px) {
-    .switch {
-      width: 50px;
-      height: 24px;
-    }
-    .slider {
-      border-radius: 8px;
-    }
-    .slider:before {
-      height: 16px;
-      width: 16px;
-      left: 1px;
-      bottom: 2px;
-      border-radius: 4px;
-    }
-    .switch input:checked + .slider:before {
-      transform: translateX(26px);
-    }
   }
   @media (max-width: 1160px) {
     h2 {

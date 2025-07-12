@@ -14,9 +14,6 @@ publish = false
 name = "bromomethane"
 path = "src/main.rs"
 
-[lib]
-crate-type = ["staticlib", "cdylib", "rlib"]
-
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
@@ -45,6 +42,7 @@ rayon = "1.10.0"
 balatro_mod_index = { version = "0.4.3", features = ["reqwest"] }
 lovely_mod_manager = "0.5.1"
 bytes = "1.10.1"
+tempfile = "3.20.0"
 
 [dev-dependencies]
 tempfile = "3.20.0"

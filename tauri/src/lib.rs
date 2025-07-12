@@ -34,7 +34,7 @@ use bmm_lib::{
     cache,
     database::{Database, InstalledMod},
     errors::AppError,
-    finder::{get_lovely_mods_dir, is_balatro_running, is_steam_running},
+    finder::{get_lovely_mods_dir, is_steam_running},
     local_mod_detection, lovely,
     smods_installer::{ModInstaller, ModType},
 };
@@ -59,11 +59,6 @@ struct Payload {
 #[tauri::command]
 async fn check_steam_running() -> bool {
     is_steam_running()
-}
-
-#[tauri::command]
-async fn check_balatro_running() -> bool {
-    is_balatro_running()
 }
 
 #[tauri::command]
@@ -409,29 +404,6 @@ fn open_directory(path: String) -> Result<(), String> {
         Ok(()) => Ok(()),
         Err(e) => Err(format!("Failed to open directory: {e}")),
     }
-}
-
-#[tauri::command]
-async fn get_lovely_console_status(
-    state: tauri::State<'_, AppState<'_, '_>>,
-) -> Result<bool, String> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
-    map_error(db.is_lovely_console_enabled())
-}
-
-#[tauri::command]
-async fn set_lovely_console_status(
-    state: tauri::State<'_, AppState<'_, '_>>,
-    enabled: bool,
-) -> Result<(), String> {
-    let db = state
-        .db
-        .lock()
-        .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
-    map_error(db.set_lovely_console_status(enabled))
 }
 
 #[tauri::command]
@@ -923,96 +895,62 @@ async fn refresh_mods_folder(state: tauri::State<'_, AppState<'_, '_>>) -> Resul
     Ok(())
 }
 
-#[tauri::command]
 #[allow(clippy::too_many_lines)]
-async fn launch_balatro(state: tauri::State<'_, AppState<'_, '_>>) -> Result<(), String> {
-    let (path_str, lovely_console_enabled) = {
-        let db = state
-            .db
-            .lock()
-            .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?;
-
-        (
-            db.get_installation_path()?
-                .ok_or_else(|| AppError::InvalidState("No installation path set".to_string()))?,
-            db.is_lovely_console_enabled()?,
-        )
-    };
-    let path = PathBuf::from(path_str);
-
+async fn _launch_balatro(path: &PathBuf, vanilla: bool) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
-        // macOS code remains unchanged
         let lovely_path = map_error(lovely::ensure_lovely_exists().await)?;
         let balatro_executable = path.join("Balatro.app/Contents/MacOS/love");
 
-        if lovely_console_enabled {
-            // If the console is disabled, add the flag
-            let disable_arg = if !lovely_console_enabled {
-                " --disable-console"
+        // Instead of using double quotes which cause conflicts in AppleScript,
+        // wrap the file paths in single quotes.
+        let command_line = format!(
+            "cd '{}' && {} DYLD_INSERT_LIBRARIES='{}' '{}'",
+            path.display(),
+            if vanilla {
+                format!(
+                    "LOVELY_MOD_DIR={}",
+                    tempfile::tempdir().unwrap().path().display()
+                )
             } else {
                 ""
-            };
-            // Instead of using double quotes which cause conflicts in AppleScript,
-            // wrap the file paths in single quotes.
-            let command_line = format!(
-                "cd '{}' && DYLD_INSERT_LIBRARIES='{}' '{}'{}",
-                path.display(),
-                lovely_path.display(),
-                balatro_executable.display(),
-                disable_arg
-            );
+            },
+            lovely_path.display(),
+            balatro_executable.display(),
+        );
 
-            // Construct the AppleScript command to run the command_line in Terminal.
-            let applescript = format!(
-                "tell application \"Terminal\" to do script \"{}\"",
-                command_line
-            );
+        // Construct the AppleScript command to run the command_line in Terminal.
+        let applescript = format!(
+            "tell application \"Terminal\" to do script \"{}\"",
+            command_line
+        );
 
-            Command::new("osascript")
-                .arg("-e")
-                .arg(applescript)
-                .spawn()
-                .map_err(|e| AppError::ProcessExecution(e.to_string()))?;
-        } else {
-            let mut command = Command::new(path.join("Balatro.app/Contents/MacOS/love"));
-            command
-                .env("DYLD_INSERT_LIBRARIES", lovely_path)
-                .current_dir(&path);
-            command
-                .spawn()
-                .map_err(|e| AppError::ProcessExecution(e.to_string()))?;
-        }
+        Command::new("osascript")
+            .arg("-e")
+            .arg(applescript)
+            .spawn()
+            .map_err(|e| AppError::ProcessExecution(e.to_string()))?;
     }
 
     #[cfg(target_os = "windows")]
     {
         // Find the executable file in the directory
-        let exe_path = find_executable_in_directory(&path)
+        let exe_path = find_executable_in_directory(path)
             .ok_or_else(|| format!("No executable found in {}", path.display()))?;
 
-        let dll_path = path.join("version.dll");
-
         // If version.dll doesn't exist, download it
-        if !dll_path.exists() {
-            lovely::ensure_version_dll_exists(&path)
-                .await
-                .inspect_err(|_| log::error!("Failed to install `lovely`"))?;
-        }
+        lovely::ensure_version_dll_exists(path)
+            .await
+            .inspect_err(|_| log::error!("Failed to install `lovely`"))?;
 
-        // Launch the game
-        if lovely_console_enabled {
-            Command::new(&exe_path)
-                .current_dir(&path)
-                .spawn()
-                .map_err(|e| format!("Failed to launch {}: {}", exe_path.display(), e))?;
-        } else {
-            Command::new(&exe_path)
-                .current_dir(&path)
-                .arg("--disable-console")
-                .spawn()
-                .map_err(|e| format!("Failed to launch {}: {}", exe_path.display(), e))?;
+        let mut command = Command::new(&exe_path);
+        command.current_dir(path);
+        if vanilla {
+            command.env("LOVELY_MOD_DIR", tempfile::tempdir().unwrap().path());
         }
+        command
+            .spawn()
+            .map_err(|e| format!("Failed to launch {}: {}", exe_path.display(), e))?;
 
         log::debug!("Launched game from {}", exe_path.display());
     }
@@ -1021,21 +959,16 @@ async fn launch_balatro(state: tauri::State<'_, AppState<'_, '_>>) -> Result<(),
     {
         const BALATRO_STEAMID: &str = "2379780";
 
-        if !path.join("version.dll").exists() {
-            lovely::ensure_version_dll_exists(&path)
-                .await
-                .inspect_err(|_| log::error!("Failed to install `lovely`"))?;
-        }
+        lovely::ensure_version_dll_exists(path)
+            .await
+            .inspect_err(|_| log::error!("Failed to install `lovely`"))?;
 
         if let Ok(steam_exe) = which::which("steam") {
             let mut command = Command::new(steam_exe);
-
-            command.args(if lovely_console_enabled {
-                vec!["-applaunch", BALATRO_STEAMID]
-            } else {
-                vec!["-applaunch", BALATRO_STEAMID, "--", "--disable-console"]
-            });
-
+            command.args(vec!["-applaunch", BALATRO_STEAMID]);
+            if vanilla {
+                command.env("LOVELY_MOD_DIR", tempfile::tempdir().unwrap().path());
+            }
             if command.spawn().is_ok() {
                 log::debug!("Launched Balatro through Steam executable");
                 return Ok(());
@@ -1058,25 +991,29 @@ async fn launch_balatro(state: tauri::State<'_, AppState<'_, '_>>) -> Result<(),
                 }
                 Ok(())
             });
-        if url_handler.is_ok()
-            && Command::new("xdg-open")
+        if url_handler.is_ok() && {
+            let mut command = Command::new("xdg-open");
+            if vanilla {
+                command.env("LOVELY_MOD_DIR", tempfile::tempdir().unwrap().path());
+            }
+            command
                 .arg(format!("steam://run/{BALATRO_STEAMID}"))
                 .spawn()
                 .is_ok()
-        {
+        } {
             log::debug!("launched balatro through steam url protocol");
             return Ok(());
         }
 
-        let balatro_exe = find_executable_in_directory(&path)
+        let balatro_exe = find_executable_in_directory(path)
             .ok_or_else(|| format!("No executable found in {}", path.display()))
             .inspect_err(|e| log::error!("{e}"))?;
         let mut command = Command::new(&balatro_exe);
         command
-            .current_dir(&path)
+            .current_dir(path)
             .env("WINEDLLOVERRIDES", "version=n,b");
-        if !lovely_console_enabled {
-            command.arg("--disable-console");
+        if vanilla {
+            command.env("LOVELY_MOD_DIR", tempfile::tempdir().unwrap().path());
         }
 
         log::debug!("attempting to launch {}", balatro_exe.display());
@@ -1088,10 +1025,25 @@ async fn launch_balatro(state: tauri::State<'_, AppState<'_, '_>>) -> Result<(),
 
     Ok(())
 }
+#[tauri::command]
+async fn launch_balatro(
+    state: tauri::State<'_, AppState<'_, '_>>,
+    vanilla: bool,
+) -> Result<(), String> {
+    let path_str = state
+        .db
+        .lock()
+        .map_err(|_| AppError::LockPoisoned("Database lock poisoned".to_string()))?
+        .get_installation_path()?
+        .ok_or_else(|| AppError::InvalidState("No installation path set".to_string()))?;
+    let path = PathBuf::from(path_str);
+
+    _launch_balatro(&path, vanilla).await
+}
 
 // Add this helper function for Linux if it doesn't exist already
 #[cfg(target_os = "linux")]
-fn find_executable_in_directory(dir: &PathBuf) -> Option<PathBuf> {
+fn find_executable_in_directory(dir: &Path) -> Option<PathBuf> {
     if let Ok(entries) = std::fs::read_dir(dir) {
         let mut executables: Vec<PathBuf> = Vec::new();
 
@@ -1951,7 +1903,6 @@ pub fn run() {
             add_installed_mod,
             backup_local_mod,
             cascade_uninstall,
-            check_balatro_running,
             check_custom_balatro,
             check_existing_installation,
             check_mod_installation,
@@ -1970,7 +1921,6 @@ pub fn run() {
             get_installed_mods_from_db,
             get_last_fetched,
             get_latest_steamodded_release,
-            get_lovely_console_status,
             get_mod_list,
             get_mods_folder,
             get_repo_path,
@@ -2002,7 +1952,6 @@ pub fn run() {
             save_versions_cache,
             set_background_state,
             set_balatro_path,
-            set_lovely_console_status,
             set_security_warning_acknowledged,
             toggle_mod_enabled,
             toggle_mod_enabled_by_path,
