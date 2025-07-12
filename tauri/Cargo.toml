@@ -1,6 +1,6 @@
 [package]
 name = "bromomethane"
-version = "0.3.0"
+version = "0.4.0"
 description = "A mod manager for Balatro - easily install and manage mods for the popular roguelike deckbuilding game"
 authors = ["kasimeka <kasimeka@tuta.io>"]
 edition = "2024"
