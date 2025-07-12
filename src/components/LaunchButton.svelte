@@ -1,42 +1,43 @@
 <script lang="ts">
   import {invoke} from "@tauri-apps/api/core";
   import LaunchAlertBox from "./LaunchAlertBox.svelte";
-  import {addMessage} from "../lib/stores";
 
-  let showAlert = false;
+  let vanilla = $state(false);
+  let showAlert = $state(false);
 
-  const handleLaunch = async () => {
+  const handleLaunch = async (args: {vanilla: boolean}) => {
+    vanilla = args.vanilla;
     const path = await invoke("get_balatro_path");
-    if (path && path.toString().includes("Steam")) {
-      let is_balatro_running: boolean = await invoke("check_balatro_running");
-      if (is_balatro_running) {
-        addMessage("Balatro is already running", "error");
-        return;
-      }
-      let is_steam_running: boolean = await invoke("check_steam_running");
-      if (!is_steam_running) {
-        showAlert = true;
-        return;
-      } else {
-        await invoke("launch_balatro");
-        return;
-      }
+    if (
+      path &&
+      path.toString().toLowerCase().includes("steam") &&
+      !(await invoke("check_steam_running"))
+    ) {
+      showAlert = true;
+      return;
     } else {
-      await invoke("launch_balatro");
+      await invoke("launch_balatro", args);
       return;
     }
-  };
-
-  const handleAlertClose = () => {
-    showAlert = false;
   };
 </script>
 
 <div class="launch-container">
-  <button class="launch-button" on:click={handleLaunch}> Launch </button>
+  <button class="launch-button" onclick={handleLaunch.bind(null, {vanilla: false})}>
+    launch
+  </button>
+  <button class="launch-dropdown" onclick={handleLaunch.bind(null, {vanilla: true})}>
+    vanilla
+  </button>
 </div>
 
-<LaunchAlertBox show={showAlert} onClose={handleAlertClose} />
+<LaunchAlertBox
+  show={showAlert}
+  {vanilla}
+  onClose={(_e: unknown) => {
+    showAlert = false;
+  }}
+/>
 
 <style>
   .launch-container {
@@ -70,6 +71,34 @@
   }
 
   .launch-button:active {
+    transform: translateY(0);
+  }
+
+  .launch-dropdown {
+    background: #00a2ff;
+    color: #f4eee0;
+    font-family: "M6X11", sans-serif;
+    font-size: 1rem;
+    padding: 0.5rem 2.2rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-shadow:
+      -2px -2px 0 #000,
+      2px -2px 0 #000,
+      -2px 2px 0 #000,
+      2px 2px 0 #000;
+    border-radius: 8px;
+    outline: 3px solid #334461;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+  }
+
+  .launch-dropdown:hover {
+    background: #0088ff;
+    transform: translateY(-2px);
+  }
+
+  .launch-dropdown:active {
     transform: translateY(0);
   }
 

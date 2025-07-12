@@ -5,9 +5,17 @@ all notable changes to this project will be documented in this file. the format 
 
 ## [unreleased]
 
+### added
+
+- the ability to launch the game in vanilla mode
+
 ### changed
 
 - trim a lot of the about page's text
+
+### removed
+
+- drop support for disabling lovely console output
 
 ## [0.3.0] - 2025-07-04
 

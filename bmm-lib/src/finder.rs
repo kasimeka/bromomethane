@@ -1,22 +1,12 @@
 use log::error;
 use log::info;
-#[cfg(target_os = "windows")]
-use std::fs::File;
-#[cfg(target_os = "windows")]
-use std::io::{BufReader, Read};
-#[cfg(target_os = "windows")]
-use std::path::Path;
 use std::path::PathBuf;
-#[cfg(target_os = "windows")]
-use sysinfo::System;
-#[cfg(target_os = "windows")]
-use winreg::RegKey;
-#[cfg(target_os = "windows")]
-use winreg::enums::*;
 
 #[cfg(target_os = "windows")]
 fn read_path_from_registry() -> Result<String, std::io::Error> {
-    let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+    use winreg::enums::HKEY_LOCAL_MACHINE;
+
+    let hklm = winreg::RegKey::predef(HKEY_LOCAL_MACHINE);
     let steam_path = hklm.open_subkey("SOFTWARE\\WOW6432Node\\Valve\\Steam")?;
 
     Ok(steam_path.get_value("InstallPath")?)
@@ -36,6 +26,10 @@ fn remove_unexisting_paths(paths: &mut Vec<PathBuf>) {
 
 #[cfg(target_os = "windows")]
 pub fn get_balatro_paths() -> Vec<PathBuf> {
+    use std::fs::File;
+    use std::io::{BufReader, Read};
+    use std::path::Path;
+
     let steam_path = read_path_from_registry();
     let mut steam_path = steam_path.unwrap_or_else(|_| {
         error!("Could not read steam install path from Registry! Trying standard installation path in C:\\");
@@ -139,7 +133,7 @@ pub fn get_balatro_paths() -> Vec<PathBuf> {
 pub fn is_steam_running() -> bool {
     #[cfg(target_os = "windows")]
     {
-        let system = System::new_all();
+        let system = sysinfo::System::new_all();
         let x = system
             .processes_by_exact_name(std::ffi::OsStr::new("steam.exe"))
             .next()
@@ -168,20 +162,9 @@ pub fn is_steam_running() -> bool {
     {
         use std::ffi::OsStr;
         let system = sysinfo::System::new_all();
-        // On Linux, check for several possible Steam process names
-        let steam_process_names = vec![
-            OsStr::new("steam"),
-            OsStr::new("steamwebhelper"),
-            OsStr::new("steamwebhelper.exe"),
-        ];
-
-        for name in steam_process_names {
-            if system.processes_by_name(name).next().is_some() {
-                return true;
-            }
-        }
-
-        false
+        ["steam", "steamwebhelper", "steamwebhelper.exe"]
+            .iter()
+            .any(|p| system.processes_by_name(OsStr::new(p)).next().is_some())
     }
 }
 
@@ -215,57 +198,4 @@ pub fn get_installed_mods(installation_path: Option<&String>) -> Vec<String> {
         .filter(|p| !p.contains(".lovely") && !p.contains("lovely"))
         .map(std::string::ToString::to_string)
         .collect()
-}
-
-#[must_use]
-pub fn is_balatro_running() -> bool {
-    #[cfg(target_os = "windows")]
-    {
-        let system = System::new_all();
-        let x = system
-            .processes_by_exact_name(std::ffi::OsStr::new("Balatro.exe"))
-            .next()
-            .is_some();
-        x
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        use libproc::proc_pid::name;
-        use libproc::processes;
-
-        if let Ok(pids) = processes::pids_by_type(processes::ProcFilter::All) {
-            for pid in pids {
-                if let Ok(name) = name(pid as i32) {
-                    if (name.to_lowercase().contains("balatro")
-                        && name.to_lowercase() != "bromomethane")
-                        | (name == "love")
-                    {
-                        return true;
-                    }
-                }
-            }
-        }
-        false
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        use std::ffi::OsStr;
-        let system = sysinfo::System::new_all();
-        // On Linux, check for several possible Balatro process names
-        let balatro_process_names = vec![
-            OsStr::new("Balatro"),
-            OsStr::new("Balatro.exe"),
-            OsStr::new("love"),
-        ];
-
-        for name in balatro_process_names {
-            if system.processes_by_name(name).next().is_some() {
-                return true;
-            }
-        }
-
-        false
-    }
 }

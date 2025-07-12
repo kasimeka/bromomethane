@@ -1,48 +1,35 @@
 use crate::errors::AppError;
 
 use std::fs::File;
-
 use std::path::PathBuf;
+
+static RENEWED_LOVELY: std::sync::OnceLock<()> = std::sync::OnceLock::new();
 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 pub async fn ensure_version_dll_exists(
     game_path: &std::path::Path,
 ) -> Result<Option<PathBuf>, AppError> {
-    use std::fs::File;
-
     let dll_path = game_path.join("version.dll");
 
-    if dll_path.exists() {
+    if RENEWED_LOVELY.get().is_some() && dll_path.exists() {
+        log::debug!("skipping version.dll refresh");
         return Ok(Some(dll_path));
     }
-    // if the dll doesn't exist, download it
 
-    let mut outfile = match File::create(&dll_path) {
-        Ok(f) => f,
-        Err(e) => {
-            #[cfg(target_os = "linux")]
-            if let Some(errno) = e.raw_os_error() {
-                if errno == /* (30) - Read-only filesystem */ libc::EROFS
-                    || errno == /* (13) - Permission denied */ libc::EACCES
-                {
-                    log::error!(
-                        "Failed to create file '{}', path not writable ({}). This error will be ignored and you have to manually install lovely instead.",
-                        dll_path.display(),
-                        errno,
-                    );
-                    return Ok(None);
-                }
-            }
-            return Err(AppError::FileWrite {
-                path: dll_path.clone(),
-                source: e.to_string(),
-            })
-            .inspect_err(|e| {
-                log::error!("Failed to create file '{}': {}", dll_path.display(), e);
-            });
+    match download_version_dll(&dll_path).await {
+        Ok(()) => {
+            _ = RENEWED_LOVELY.set(());
         }
-    };
-    download_version_dll(&mut outfile).await?;
+        Err(e) => {
+            if !(dll_path.exists()
+                && dll_path.is_file()
+                && dll_path.metadata().map(|m| m.len() > 0).unwrap_or(false))
+            {
+                return Err(e);
+            }
+            log::warn!("reusing old `version.dll`",);
+        }
+    }
 
     Ok(Some(dll_path))
 }
@@ -226,25 +213,24 @@ async fn download_and_install_lovely(target_path: &Path) -> Result<(), AppError>
 }
 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
-async fn download_version_dll(outfile: &mut File) -> Result<(), AppError> {
+async fn download_version_dll(dll_path: &std::path::Path) -> Result<(), AppError> {
+    const URL: &str = "https://github.com/ethangreen-dev/lovely-injector/releases/latest/download/lovely-x86_64-pc-windows-msvc.zip";
+
     let temp_dir = tempfile::tempdir().map_err(|e| AppError::FileWrite {
         path: PathBuf::from("temp directory"),
         source: e.to_string(),
     })?;
 
-    // URL to the latest version.dll in the lovely injector repository
-    let url = "https://github.com/ethangreen-dev/lovely-injector/releases/latest/download/lovely-x86_64-pc-windows-msvc.zip";
-
     #[cfg(target_os = "windows")]
-    log::info!("Downloading lovely injector for Windows from {}", url);
+    log::info!("Downloading lovely injector for Windows from {URL}");
 
     #[cfg(target_os = "linux")]
-    log::info!("Downloading lovely injector for Linux/Proton from {url}");
+    log::info!("Downloading lovely injector for Linux/Proton from {URL}");
 
     // Download the ZIP file
     let client = reqwest::Client::new();
     let response = client
-        .get(url)
+        .get(URL)
         .send()
         .await
         .map_err(|e| AppError::Network(format!("Failed to download lovely injector: {e}")))?;
@@ -291,7 +277,33 @@ async fn download_version_dll(outfile: &mut File) -> Result<(), AppError> {
 
         if entry_name.ends_with("version.dll") {
             log::info!("Found version.dll in zip archive");
-            std::io::copy(&mut file, outfile)?;
+
+            let mut outfile = match File::create(dll_path) {
+                Ok(f) => f,
+                Err(e) => {
+                    #[cfg(target_os = "linux")]
+                    if let Some(errno) = e.raw_os_error() {
+                        if errno == /* (30) - Read-only filesystem */ libc::EROFS
+                            || errno == /* (13) - Permission denied */ libc::EACCES
+                        {
+                            log::error!(
+                                "Failed to create file '{}', path not writable ({}). This error will be ignored and you have to manually install lovely instead.",
+                                dll_path.display(),
+                                errno,
+                            );
+                            return Ok(());
+                        }
+                    }
+                    return Err(AppError::FileWrite {
+                        path: dll_path.to_path_buf(),
+                        source: e.to_string(),
+                    })
+                    .inspect_err(|e| {
+                        log::error!("Failed to create file '{}': {}", dll_path.display(), e);
+                    });
+                }
+            };
+            std::io::copy(&mut file, &mut outfile)?;
             return Ok(());
         }
     }

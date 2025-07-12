@@ -529,43 +529,6 @@ impl Database {
         }
     }
 
-    fn enable_lovely_console(&self) -> Result<(), AppError> {
-        self.conn.execute(
-            "INSERT OR REPLACE INTO settings (setting, value) VALUES ('lovely_console', 'enabled')",
-            [],
-        )?;
-        Ok(())
-    }
-
-    fn disable_lovely_console(&self) -> Result<(), AppError> {
-        self.conn.execute(
-            "INSERT OR REPLACE INTO settings (setting, value) VALUES ('lovely_console', 'disabled')",
-            [],
-        )?;
-        Ok(())
-    }
-
-    pub fn set_lovely_console_status(&self, enabled: bool) -> Result<(), AppError> {
-        if enabled {
-            self.enable_lovely_console()
-        } else {
-            self.disable_lovely_console()
-        }
-    }
-
-    pub fn is_lovely_console_enabled(&self) -> Result<bool, AppError> {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT value FROM settings WHERE setting = 'lovely_console'")?;
-        let mut rows = stmt.query([])?;
-
-        if let Some(row) = rows.next()? {
-            Ok(row.get::<_, String>(0)? == "enabled")
-        } else {
-            Ok(false)
-        }
-    }
-
     pub fn set_security_warning_acknowledged(&self, acknowledged: bool) -> Result<(), AppError> {
         let value = if acknowledged { "yes" } else { "no" };
         self.conn.execute(
